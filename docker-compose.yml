@@ -1,0 +1,51 @@
+services:
+  # ===== API (Stockfish + SQLite) ===== shared by both profiles; never published
+  api:
+    profiles: ["prod", "local"]
+    build:
+      context: .
+      target: api
+    container_name: smart-chess-api
+    restart: unless-stopped
+    environment:
+      - ENGINE_POOL=${ENGINE_POOL:-}
+      - LICHESS_TOKEN=${LICHESS_TOKEN:-}
+    volumes:
+      - smart-chess-data:/app/data
+
+  # ===== PROD (VPS) =====
+  web:
+    profiles: ["prod"]
+    build:
+      context: .
+      target: web
+    container_name: smart-chess
+    restart: unless-stopped
+    depends_on:
+      - api
+    expose:
+      - "80"
+    networks:
+      - default
+      - edge
+
+  # ===== LOCAL ===== # Abre em http://localhost:8082/
+  web-local:
+    profiles: ["local"]
+    build:
+      context: .
+      target: web
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - "8082:80"
+
+volumes:
+  # games.db + lichess-token.txt; survives rebuilds
+  smart-chess-data:
+
+networks:
+  # network usada na VPS, criada fora do compose
+  edge:
+    external: true

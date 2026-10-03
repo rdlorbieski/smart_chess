@@ -1,0 +1,225 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;600;700&display=swap');
+
+@import 'tailwindcss';
+
+/* ── Chessground ─────────────────────────────────────── */
+@import 'chessground/assets/chessground.base.css';
+@import 'chessground/assets/chessground.cburnett.css';
+
+/* ── Theme ────────────────────────────────────────────── */
+@theme {
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-display: 'Outfit', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Menlo', monospace;
+}
+
+:root {
+  --background: #0d1117;
+  --card: #161b22;
+  --card-elevated: #1c2128;
+  --border: #30363d;
+  --text: #e6edf3;
+  --muted: #7d8590;
+  --accent: #388bfd;
+  --sq-light: #eeeed2;
+  --sq-dark: #769656;
+}
+
+/* ── Globals ──────────────────────────────────────────── */
+* { box-sizing: border-box; }
+
+html, body {
+  background-color: var(--background);
+  color: var(--text);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Chessground board sizing ─────────────────────────── */
+/*
+ * .cg-wrap must have real pixel width AND height so that cg-container's
+ * height:100% resolves. aspect-ratio:1/1 accomplishes this cleanly.
+ *
+ * Coords inside cg-container bleed outside .cg-wrap (ranks at top:-20px,
+ * files at bottom:-4px). We add padding to .cg-board-wrapper so those coords
+ * have room — the wrapper must NOT use overflow:hidden.
+ */
+.cg-board-wrapper {
+  width: 100%;
+  overflow: visible;
+}
+.cg-board-wrapper .cg-wrap {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  position: relative; /* establishes containing block for cg-container */
+  /* NO overflow:hidden — coords extend outside bounds */
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.55);
+}
+
+/* ── Board checkerboard + grid lines ─────────────────── */
+/*
+ * Chessground does NOT create square elements for all 64 squares — board
+ * coloring lives entirely on cg-board's background-image.
+ *
+ * Classic CSS checkerboard: 2 identical 45deg gradients offset by half a tile.
+ * Tile = 2 squares wide → 25% of board. Half tile = 12.5%.
+ *
+ * Grid lines: repeating-linear-gradient overlay via ::after at z-index:1
+ * (pieces are z-index:2, so they render above the lines).
+ */
+cg-board {
+  /* SVG data URI: clean 2×2 tile with sharp rectangular squares (no diagonal artifacts) */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='2' height='2'%3E%3Crect width='1' height='1' fill='%23eeeed2'/%3E%3Crect x='1' width='1' height='1' fill='%23769656'/%3E%3Crect y='1' width='1' height='1' fill='%23769656'/%3E%3Crect x='1' y='1' width='1' height='1' fill='%23eeeed2'/%3E%3C/svg%3E");
+  background-size: 25% 25%;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+cg-board::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  background-image:
+    repeating-linear-gradient(
+      to right,
+      rgba(0,0,0,0.40) 0px, rgba(0,0,0,0.40) 1px,
+      transparent 1px, transparent 12.5%
+    ),
+    repeating-linear-gradient(
+      to bottom,
+      rgba(0,0,0,0.40) 0px, rgba(0,0,0,0.40) 1px,
+      transparent 1px, transparent 12.5%
+    );
+}
+
+/* ── Last move highlight ─────────────────────────────── */
+cg-board square.last-move {
+  background-color: rgba(155, 199, 0, 0.40);
+}
+cg-board square.selected {
+  background-color: rgba(20, 85, 30, 0.50);
+}
+
+/* Legal move dots */
+cg-board square.move-dest {
+  background: radial-gradient(rgba(20, 85, 0, 0.5) 22%, rgba(0,0,0,0) 23%);
+  cursor: pointer;
+}
+cg-board square.move-dest:hover {
+  background: radial-gradient(rgba(20, 85, 0, 0.7) 22%, rgba(0,0,0,0) 23%);
+}
+/* Capture dest: hollow ring */
+cg-board square.oc.move-dest {
+  background: radial-gradient(
+    transparent 0%,
+    transparent 79%,
+    rgba(20, 85, 0, 0.50) 80%
+  );
+}
+
+/* Check highlight */
+cg-board square.check {
+  background: radial-gradient(ellipse at center,
+    rgba(255, 0, 0, 0.9) 0%,
+    rgba(231, 0, 0, 0.7) 25%,
+    rgba(169, 0, 0, 0) 89%,
+    rgba(158, 0, 0, 0) 100%
+  );
+}
+
+/* ── Board coordinates (chess.com style) ──────────────────────────────────
+ * chessground renders one `coords.ranks` (8 numbers) and one `coords.files`
+ * (8 letters). We place them INSIDE the board:
+ *   • rank numbers on the left-hand column (file a; file h when flipped),
+ *     top-left corner of each square;
+ *   • file letters on the bottom row (rank 1; rank 8 when flipped),
+ *     bottom-right corner of each square.
+ * Each label takes the colour of the opposite square so it reads on both.
+ *
+ * Square colours under each label (coord[0] = rank 1 / file a):
+ *   white orientation: a1 is dark → odd children sit on dark squares;
+ *   black orientation: h1 (top-left) and a8 (bottom-right) are light → odd
+ *   children sit on light squares. Hence the swap under `.black`.
+ * ──────────────────────────────────────────────────────────────────────── */
+.cg-wrap coords {
+  opacity: 1;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 11px;
+  z-index: 3; /* above the grid overlay, below dragged pieces */
+}
+
+.cg-wrap coords.ranks {
+  left: 0;
+  top: 0;
+  width: 12.5%;
+  height: 100%;
+}
+.cg-wrap coords.ranks coord {
+  flex: 1 1 0;
+  transform: none;
+  padding: 2px 0 0 4px;
+  text-align: left;
+}
+
+.cg-wrap coords.files {
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 12.5%;
+  text-transform: lowercase;
+}
+.cg-wrap coords.files coord {
+  flex: 1 1 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  padding: 0 4px 1px 0;
+}
+
+/* Contrast with the square underneath */
+.cg-wrap coords:not(.black) coord:nth-child(odd),
+.cg-wrap coords.black coord:nth-child(even) {
+  color: var(--sq-light); /* on a dark square */
+}
+.cg-wrap coords:not(.black) coord:nth-child(even),
+.cg-wrap coords.black coord:nth-child(odd) {
+  color: var(--sq-dark); /* on a light square */
+}
+
+/* Promotion picker: reuse chessground piece art outside the board grid */
+.cg-board-wrapper .cg-wrap.cg-promo {
+  display: flex;
+  width: auto;
+  aspect-ratio: auto;
+}
+.cg-wrap.cg-promo piece {
+  position: static;
+  display: block;
+  width: 56px;
+  height: 56px;
+  transform: none;
+  pointer-events: none;
+}
+
+/* Arrow / draw colors */
+cg-board .cg-shapes .blue { stroke: rgba(56, 139, 253, 0.85); fill: rgba(56, 139, 253, 0.15); }
+cg-board .cg-shapes .green { stroke: rgba(74, 222, 128, 0.85); fill: rgba(74, 222, 128, 0.15); }
+cg-board .cg-shapes .red { stroke: rgba(239, 68, 68, 0.85); fill: rgba(239, 68, 68, 0.15); }
+cg-board .cg-shapes .yellow { stroke: rgba(234, 179, 8, 0.85); fill: rgba(234, 179, 8, 0.15); }
+
+/* ── Scrollbar ────────────────────────────────────────── */
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #30363d; border-radius: 3px; }
+
+/* ── Typography helpers ───────────────────────────────── */
+.font-display { font-family: var(--font-display); }
+.font-mono    { font-family: var(--font-mono); }

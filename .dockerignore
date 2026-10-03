@@ -1,0 +1,16 @@
+.git
+.idea
+.vscode
+.claude
+
+node_modules
+dist
+data
+stockfish
+stockfish-linux
+stockfish-*.zip
+.figma/design-context
+
+*.log
+.env
+.env.*

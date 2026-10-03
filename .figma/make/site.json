@@ -1,0 +1,12 @@
+{
+  "title": "ChessMind",
+  "language": "pt-BR",
+  "description": "Análise de xadrez com Stockfish: qualidade, dificuldade e criticidade de cada lance, armadilhas ocultas, explorador de partidas de mestres e relatório da partida.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}
