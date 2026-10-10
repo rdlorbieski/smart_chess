@@ -16,8 +16,8 @@ export default function OpeningBadge() {
 
   return (
     <span className="flex items-center gap-1.5 min-w-0 text-xs" title={`${opening.eco} · ${opening.name}`}>
-      <span className="font-mono font-semibold text-[#388bfd] shrink-0">{opening.eco}</span>
-      <span className="text-[#e6edf3] truncate">{opening.name}</span>
+      <span className="font-mono font-semibold text-[#81b64c] shrink-0">{opening.eco}</span>
+      <span className="text-[#f1f4f8] truncate">{opening.name}</span>
     </span>
   )
 }

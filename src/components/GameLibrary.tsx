@@ -61,24 +61,24 @@ function DatabaseImport() {
 
   if (count === null) return null // server offline: the list below already says so
   return (
-    <div className="mb-3 rounded-lg border border-[#30363d] bg-[#0d1117] p-3 space-y-2">
+    <div className="mb-3 rounded-lg border border-[#34435a] bg-[#1a2230] p-3 space-y-2">
       <div className="flex items-center justify-between gap-2">
-        <div className="text-xs text-[#8b949e]">
-          <span className="text-[#e6edf3] font-semibold">Base de mestres</span> · {count.toLocaleString('pt-BR')} partidas importadas
+        <div className="text-xs text-[#a3afc2]">
+          <span className="text-[#f1f4f8] font-semibold">Base de mestres</span> · {count.toLocaleString('pt-BR')} partidas importadas
         </div>
         <div className="flex gap-1.5 shrink-0">
-          <label className={`px-2.5 py-1 rounded text-xs cursor-pointer ${busy ? 'opacity-50 pointer-events-none' : 'bg-[#388bfd] text-white hover:bg-[#58a6ff]'}`}>
+          <label className={`px-2.5 py-1 rounded text-xs cursor-pointer ${busy ? 'opacity-50 pointer-events-none' : 'bg-[#81b64c] text-white hover:bg-[#95c95f]'}`}>
             {busy ? 'Importando…' : 'Importar PGN…'}
             <input type="file" accept=".pgn,application/x-chess-pgn,text/plain" multiple className="hidden" onChange={(e) => onFiles(e.target.files)} />
           </label>
           {count > 0 && (
-            <button onClick={clear} className="px-2.5 py-1 rounded text-xs border border-[#30363d] text-[#7d8590] hover:text-red-400">
+            <button onClick={clear} className="px-2.5 py-1 rounded text-xs border border-[#34435a] text-[#8f9db3] hover:text-red-400">
               Limpar
             </button>
           )}
         </div>
       </div>
-      <p className="text-[10px] text-[#7d8590]">
+      <p className="text-[10px] text-[#8f9db3]">
         Fontes gratuitas: TWIC (theweekinchess.com, partidas de elite toda semana) ou a Lichess Elite Database. As partidas
         importadas alimentam a seção "Base importada" do Explorador e ficam fora desta lista.
       </p>
@@ -88,19 +88,19 @@ function DatabaseImport() {
 }
 
 const input =
-  'w-full bg-[#0d1117] border border-[#30363d] rounded-lg px-3 py-2 text-[#e6edf3] text-sm focus:outline-none focus:border-[#388bfd] placeholder-[#7d8590]'
-const labelCls = 'block text-[#7d8590] text-[10px] uppercase tracking-wider mb-1'
+  'w-full bg-[#1a2230] border border-[#34435a] rounded-lg px-3 py-2 text-[#f1f4f8] text-sm focus:outline-none focus:border-[#81b64c] placeholder-[#8f9db3]'
+const labelCls = 'block text-[#8f9db3] text-[10px] uppercase tracking-wider mb-1'
 
 function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={onClose}>
       <div
-        className="bg-[#161b22] border border-[#30363d] rounded-xl p-5 w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl"
+        className="bg-[#212b3a] border border-[#34435a] rounded-xl p-5 w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-[#e6edf3] font-semibold">{title}</h2>
-          <button onClick={onClose} className="text-[#7d8590] hover:text-[#e6edf3] text-lg">✕</button>
+          <h2 className="text-[#f1f4f8] font-semibold">{title}</h2>
+          <button onClick={onClose} className="text-[#8f9db3] hover:text-[#f1f4f8] text-lg">✕</button>
         </div>
         {children}
       </div>
@@ -117,7 +117,7 @@ function Stars({ value, onChange }: { value: number; onChange?: (n: number) => v
           type="button"
           disabled={!onChange}
           onClick={() => onChange?.(value === n ? 0 : n)}
-          className={`text-lg leading-none ${n <= value ? 'text-amber-400' : 'text-[#30363d]'} ${onChange ? 'hover:text-amber-300' : 'cursor-default'}`}
+          className={`text-lg leading-none ${n <= value ? 'text-amber-400' : 'text-[#34435a]'} ${onChange ? 'hover:text-amber-300' : 'cursor-default'}`}
           aria-label={`${n} estrelas`}
         >
           ★
@@ -178,8 +178,8 @@ export function SaveGameModal({ onClose }: { onClose: () => void }) {
   return (
     <Modal title="Salvar partida" onClose={onClose}>
       {!serverEngine ? (
-        <p className="text-sm text-[#7d8590]">
-          O servidor está desligado, então não dá para salvar. Inicie com <code className="text-[#e6edf3]">pnpm server</code> e abra esta janela de novo.
+        <p className="text-sm text-[#8f9db3]">
+          O servidor está desligado, então não dá para salvar. Inicie com <code className="text-[#f1f4f8]">pnpm server</code> e abra esta janela de novo.
         </p>
       ) : (
         <div className="space-y-3">
@@ -212,19 +212,19 @@ export function SaveGameModal({ onClose }: { onClose: () => void }) {
               <span className={labelCls + ' !mb-0'}>Avaliação</span>
               <Stars value={stars} onChange={setStars} />
             </div>
-            <span className="text-[10px] text-[#7d8590] font-mono">
+            <span className="text-[10px] text-[#8f9db3] font-mono">
               salva {hasMoves ? `PGN · ${moves.length} lances` : 'FEN (posição atual)'}
             </span>
           </div>
           {msg && <p className={`text-sm ${msg.ok ? 'text-green-400' : 'text-red-400'}`}>{msg.text}</p>}
           <div className="flex justify-end gap-2">
-            <button onClick={onClose} className="px-4 py-2 rounded-lg border border-[#30363d] text-[#7d8590] text-sm hover:bg-[#21262d]">
+            <button onClick={onClose} className="px-4 py-2 rounded-lg border border-[#34435a] text-[#8f9db3] text-sm hover:bg-[#2a3648]">
               {msg?.ok ? 'Fechar' : 'Cancelar'}
             </button>
             <button
               onClick={save}
               disabled={busy || msg?.ok}
-              className="px-4 py-2 rounded-lg bg-[#388bfd] text-white text-sm font-medium hover:bg-[#58a6ff] disabled:opacity-40"
+              className="px-4 py-2 rounded-lg bg-[#81b64c] text-white text-sm font-medium hover:bg-[#95c95f] disabled:opacity-40"
             >
               Salvar
             </button>
@@ -273,21 +273,21 @@ export function LibraryModal({ onClose }: { onClose: () => void }) {
       <DatabaseImport />
       <input className={`${input} mb-3`} placeholder="Buscar jogadores, torneio, abertura, notas…" value={q} onChange={(e) => setQ(e.target.value)} />
       {error && <p className="text-sm text-red-400">{error}</p>}
-      {rows && rows.length === 0 && <p className="text-sm text-[#7d8590] py-4 text-center">Nenhuma partida salva ainda.</p>}
+      {rows && rows.length === 0 && <p className="text-sm text-[#8f9db3] py-4 text-center">Nenhuma partida salva ainda.</p>}
       <ul className="space-y-1.5">
         {rows?.map((g) => (
-          <li key={g.id} className="rounded-lg border border-[#30363d] bg-[#0d1117] p-2.5 flex items-center gap-3">
+          <li key={g.id} className="rounded-lg border border-[#34435a] bg-[#1a2230] p-2.5 flex items-center gap-3">
             <button onClick={() => open(g.id)} className="flex-1 min-w-0 text-left">
-              <div className="text-sm text-[#e6edf3] truncate">
-                {g.white} <span className="text-[#7d8590]">x</span> {g.black}
-                <span className="ml-2 font-mono text-xs text-[#7d8590]">{g.result}</span>
+              <div className="text-sm text-[#f1f4f8] truncate">
+                {g.white} <span className="text-[#8f9db3]">x</span> {g.black}
+                <span className="ml-2 font-mono text-xs text-[#8f9db3]">{g.result}</span>
               </div>
-              <div className="text-[11px] text-[#7d8590] truncate">
+              <div className="text-[11px] text-[#8f9db3] truncate">
                 {[g.event, g.game_date, g.eco && `${g.eco} ${g.opening}`, g.has_pgn ? 'PGN' : 'FEN'].filter(Boolean).join(' · ')}
               </div>
             </button>
             <Stars value={g.stars} />
-            <button onClick={() => remove(g.id)} className="text-[#7d8590] hover:text-red-400 text-sm" title="Apagar">🗑</button>
+            <button onClick={() => remove(g.id)} className="text-[#8f9db3] hover:text-red-400 text-sm" title="Apagar">🗑</button>
           </li>
         ))}
       </ul>

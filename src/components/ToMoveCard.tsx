@@ -9,10 +9,10 @@ function Bar({ label, value, color }: { label: string; value: number; color: str
   return (
     <div>
       <div className="flex justify-between items-center mb-1">
-        <span className="text-[#7d8590] text-[10px] uppercase tracking-wider">{label}</span>
-        <span className="text-[#e6edf3] text-xs font-mono font-bold">{pct}%</span>
+        <span className="text-[#8f9db3] text-[10px] uppercase tracking-wider">{label}</span>
+        <span className="text-[#f1f4f8] text-xs font-mono font-bold">{pct}%</span>
       </div>
-      <div className="h-1.5 rounded-full bg-[#21262d] overflow-hidden">
+      <div className="h-1.5 rounded-full bg-[#2a3648] overflow-hidden">
         <div className="h-full rounded-full transition-all duration-700 ease-out" style={{ width: `${pct}%`, backgroundColor: color }} />
       </div>
     </div>
@@ -48,15 +48,15 @@ export default function ToMoveCard({ onPreviewLine }: { onPreviewLine?: (moves: 
     : []
 
   return (
-    <div className="rounded-lg border border-[#30363d] bg-[#161b22] p-3 space-y-3">
+    <div className="rounded-lg border border-[#34435a] bg-[#212b3a] p-3 space-y-3">
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0">
           <span
             className="w-3 h-3 rounded-full border shrink-0"
             style={{ background: turn === 'w' ? '#f0f0f0' : '#1a1a1a', borderColor: turn === 'w' ? '#888' : '#555' }}
           />
-          <span className="text-sm text-[#e6edf3] font-semibold truncate">{name}</span>
-          <span className="text-[#7d8590] text-xs shrink-0">a jogar</span>
+          <span className="text-sm text-[#f1f4f8] font-semibold truncate">{name}</span>
+          <span className="text-[#8f9db3] text-xs shrink-0">a jogar</span>
         </div>
         {ready && !ready.isForced && (
           <span
@@ -73,12 +73,12 @@ export default function ToMoveCard({ onPreviewLine }: { onPreviewLine?: (moves: 
       </div>
 
       {!ready ? (
-        <div className="flex items-center gap-2 text-[#7d8590] text-xs">
-          <div className="w-3.5 h-3.5 border-2 border-[#388bfd] border-t-transparent rounded-full animate-spin" />
+        <div className="flex items-center gap-2 text-[#8f9db3] text-xs">
+          <div className="w-3.5 h-3.5 border-2 border-[#81b64c] border-t-transparent rounded-full animate-spin" />
           Avaliando a decisão…
         </div>
       ) : ready.isForced ? (
-        <p className="text-[#7d8590] text-xs">Só há um lance legal — nada a decidir.</p>
+        <p className="text-[#8f9db3] text-xs">Só há um lance legal — nada a decidir.</p>
       ) : (
         <>
           <Bar label="Criticidade" value={ready.criticality} color="#f97316" />
@@ -91,15 +91,15 @@ export default function ToMoveCard({ onPreviewLine }: { onPreviewLine?: (moves: 
               onClick={() => setOpen((o) => !o)}
               disabled={locked}
               title={locked ? 'Oculto no modo Treino até revelar o melhor lance' : 'Mostrar estes lances'}
-              className={`px-2 py-0.5 rounded bg-[#21262d] text-[#7d8590] ${locked ? 'cursor-not-allowed opacity-70' : 'hover:text-[#e6edf3] hover:bg-[#30363d]'}`}
+              className={`px-2 py-0.5 rounded bg-[#2a3648] text-[#8f9db3] ${locked ? 'cursor-not-allowed opacity-70' : 'hover:text-[#f1f4f8] hover:bg-[#34435a]'}`}
             >
               {ready.acceptableMoves} {ready.acceptableMoves === 1 ? 'boa opção' : 'boas opções'} {locked ? '🔒' : open ? '▴' : '▾'}
             </button>
-            <span className="px-2 py-0.5 rounded bg-[#21262d] text-[#7d8590]" title="Estimado a partir da busca do motor; não é uma verdade absoluta.">
+            <span className="px-2 py-0.5 rounded bg-[#2a3648] text-[#8f9db3]" title="Estimado a partir da busca do motor; não é uma verdade absoluta.">
               ≈ {ready.calculationDepth} meios-lances
             </span>
             {!ready.scanned ? (
-              <span className="px-2 py-0.5 rounded bg-[#21262d] text-[#484f58] animate-pulse" title="Varrendo todos os lances legais em busca de armadilhas">
+              <span className="px-2 py-0.5 rounded bg-[#2a3648] text-[#5f6d83] animate-pulse" title="Varrendo todos os lances legais em busca de armadilhas">
                 varrendo todos os lances…
               </span>
             ) : ready.traps && ready.traps.traps.length > 0 ? (
@@ -116,14 +116,14 @@ export default function ToMoveCard({ onPreviewLine }: { onPreviewLine?: (moves: 
 
           {trapsOpen && !locked && ready.traps && ready.traps.traps.length > 0 && (
             <div className="rounded border border-red-500/20 bg-red-500/5 p-2 space-y-1.5">
-              <p className="text-[#8b949e] text-[11px] leading-relaxed">
+              <p className="text-[#a3afc2] text-[11px] leading-relaxed">
                 Parecem bons num olhar rápido (profundidade {ready.traps.glanceDepth}), mas perdem com cálculo mais fundo (profundidade{' '}
                 {ready.traps.deepDepth}). {ready.traps.traps.length} dos {ready.traps.plausible} lances naturais são
                 armadilhas; {ready.traps.goodMoves} dos {ready.traps.legal} lances legais seguram a posição.
               </p>
               <div className="flex flex-wrap gap-1">
                 {ready.traps.traps.map((t) => (
-                  <span key={t.uci} className="px-1.5 py-0.5 rounded bg-[#0d1117] border border-[#30363d] font-mono text-[11px] text-[#e6edf3]">
+                  <span key={t.uci} className="px-1.5 py-0.5 rounded bg-[#1a2230] border border-[#34435a] font-mono text-[11px] text-[#f1f4f8]">
                     {t.san}{' '}
                     <span style={{ color: t.loss >= 0.2 ? '#ef4444' : t.loss >= 0.14 ? '#f87171' : '#fca5a5' }}>
                       −{Math.round(t.loss * 100)}%
@@ -143,18 +143,18 @@ export default function ToMoveCard({ onPreviewLine }: { onPreviewLine?: (moves: 
                     key={l.multipv}
                     onClick={() => onPreviewLine?.(l.pv)}
                     title="Ver esta linha no tabuleiro"
-                    className="w-full flex items-center gap-2 px-2 py-1.5 rounded border border-[#30363d] bg-[#0d1117] hover:bg-[#21262d] text-left"
+                    className="w-full flex items-center gap-2 px-2 py-1.5 rounded border border-[#34435a] bg-[#1a2230] hover:bg-[#2a3648] text-left"
                   >
-                    <span className="text-[#7d8590] text-[10px] font-mono w-3">{i + 1}.</span>
-                    <span className="text-[#e6edf3] text-sm font-mono font-semibold">{l.san?.[0] ?? l.pv[0]}</span>
-                    <span className="text-[#7d8590] text-[11px] font-mono truncate flex-1">{l.san?.slice(1, 4).join(' ')}</span>
-                    <span className="text-[#e6edf3] text-xs font-mono">{formatEval(l.scoreWhitePerspective)}</span>
-                    <span className="text-[#7d8590] text-[10px] font-mono w-8 text-right">{i === 0 ? 'melhor' : `−${drop}%`}</span>
+                    <span className="text-[#8f9db3] text-[10px] font-mono w-3">{i + 1}.</span>
+                    <span className="text-[#f1f4f8] text-sm font-mono font-semibold">{l.san?.[0] ?? l.pv[0]}</span>
+                    <span className="text-[#8f9db3] text-[11px] font-mono truncate flex-1">{l.san?.slice(1, 4).join(' ')}</span>
+                    <span className="text-[#f1f4f8] text-xs font-mono">{formatEval(l.scoreWhitePerspective)}</span>
+                    <span className="text-[#8f9db3] text-[10px] font-mono w-8 text-right">{i === 0 ? 'melhor' : `−${drop}%`}</span>
                   </button>
                 )
               })}
               {ready.acceptableMoves < ready.lines.length && (
-                <p className="text-[#484f58] text-[10px]">
+                <p className="text-[#5f6d83] text-[10px]">
                   As outras {ready.lines.length - ready.acceptableMoves} das {ready.lines.length} principais linhas perdem bem mais.
                 </p>
               )}

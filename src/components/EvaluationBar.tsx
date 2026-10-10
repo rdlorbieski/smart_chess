@@ -65,7 +65,7 @@ export default function EvaluationBar({ score, isAnalyzing, height = '100%', fli
         </span>
       </div>
 
-      {isAnalyzing && <div className="absolute inset-0 bg-blue-500 opacity-10 animate-pulse" />}
+      {isAnalyzing && <div className="absolute inset-0 bg-white opacity-5 animate-pulse" />}
     </div>
   )
 }

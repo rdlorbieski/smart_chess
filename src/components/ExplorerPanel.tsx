@@ -22,17 +22,17 @@ function ResultBar({ w, d, b }: { w: number; d: number; b: number }) {
       className="flex h-3.5 w-full overflow-hidden rounded text-[9px] font-mono leading-[14px]"
       title={`Vitória das brancas ${pct(w)}% · empates ${pct(d)}% · vitória das pretas ${pct(b)}%`}
     >
-      <div className="bg-[#e6edf3] text-[#0d1117] text-center overflow-hidden" style={{ width: `${pct(w)}%` }}>{pct(w) >= 12 ? `${pct(w)}%` : ''}</div>
-      <div className="bg-[#7d8590] text-[#0d1117] text-center overflow-hidden" style={{ width: `${pct(d)}%` }}>{pct(d) >= 12 ? `${pct(d)}%` : ''}</div>
-      <div className="bg-[#30363d] text-[#e6edf3] text-center overflow-hidden" style={{ width: `${pct(b)}%` }}>{pct(b) >= 12 ? `${pct(b)}%` : ''}</div>
+      <div className="bg-[#f1f4f8] text-[#1a2230] text-center overflow-hidden" style={{ width: `${pct(w)}%` }}>{pct(w) >= 12 ? `${pct(w)}%` : ''}</div>
+      <div className="bg-[#8f9db3] text-[#1a2230] text-center overflow-hidden" style={{ width: `${pct(d)}%` }}>{pct(d) >= 12 ? `${pct(d)}%` : ''}</div>
+      <div className="bg-[#34435a] text-[#f1f4f8] text-center overflow-hidden" style={{ width: `${pct(b)}%` }}>{pct(b) >= 12 ? `${pct(b)}%` : ''}</div>
     </div>
   )
 }
 
 const Section = ({ title, right, children }: { title: string; right?: React.ReactNode; children: React.ReactNode }) => (
-  <div className="rounded-lg border border-[#30363d] bg-[#161b22] p-3">
+  <div className="rounded-lg border border-[#34435a] bg-[#212b3a] p-3">
     <div className="flex items-center justify-between mb-2">
-      <span className="text-[#7d8590] text-[10px] uppercase tracking-wider">{title}</span>
+      <span className="text-[#8f9db3] text-[10px] uppercase tracking-wider">{title}</span>
       {right}
     </div>
     {children}
@@ -58,11 +58,11 @@ function TokenForm({ rejected, onSaved }: { rejected: boolean; onSaved: () => vo
     }
   }
   return (
-    <div className="space-y-2 text-xs text-[#8b949e]">
+    <div className="space-y-2 text-xs text-[#a3afc2]">
       <p>
         {rejected ? 'O Lichess recusou o token salvo. ' : ''}A base de mestres (~2 milhões de partidas, 2200+) precisa de um token{' '}
-        <b className="text-[#e6edf3]">gratuito</b> do Lichess: crie um em{' '}
-        <a className="text-[#388bfd] hover:underline" href="https://lichess.org/account/oauth/token" target="_blank" rel="noreferrer">
+        <b className="text-[#f1f4f8]">gratuito</b> do Lichess: crie um em{' '}
+        <a className="text-[#81b64c] hover:underline" href="https://lichess.org/account/oauth/token" target="_blank" rel="noreferrer">
           lichess.org/account/oauth/token
         </a>{' '}
         (sem marcar nenhuma permissão) e cole aqui. Ele fica só no seu servidor (<code>data/</code>).
@@ -74,12 +74,12 @@ function TokenForm({ rejected, onSaved }: { rejected: boolean; onSaved: () => vo
           onChange={(e) => setToken(e.target.value)}
           placeholder="lip_…"
           autoComplete="off"
-          className="flex-1 min-w-0 bg-[#0d1117] border border-[#30363d] rounded px-2 py-1 text-[#e6edf3] focus:outline-none focus:border-[#388bfd]"
+          className="flex-1 min-w-0 bg-[#1a2230] border border-[#34435a] rounded px-2 py-1 text-[#f1f4f8] focus:outline-none focus:border-[#81b64c]"
         />
         <button
           onClick={save}
           disabled={!token.trim()}
-          className="px-3 py-1 rounded bg-[#388bfd] text-white disabled:opacity-40"
+          className="px-3 py-1 rounded bg-[#81b64c] text-white disabled:opacity-40"
         >
           Salvar
         </button>
@@ -180,9 +180,9 @@ export default function ExplorerPanel() {
       {failed ? (
         <p className="text-red-400 text-xs">Não foi possível falar com o servidor.</p>
       ) : !data ? (
-        <p className="text-[#7d8590] text-xs">Buscando…</p>
+        <p className="text-[#8f9db3] text-xs">Buscando…</p>
       ) : data.games.length === 0 ? (
-        <p className="text-[#7d8590] text-xs">{empty}</p>
+        <p className="text-[#8f9db3] text-xs">{empty}</p>
       ) : (
         <div className="space-y-3">
           {data.moves.length > 0 && (
@@ -191,8 +191,8 @@ export default function ExplorerPanel() {
                 <li key={m.san}>
                   <button onClick={() => playSan(m.san)} className="w-full text-left group" title="Jogar este lance">
                     <div className="flex items-center justify-between text-xs mb-1">
-                      <span className="font-mono font-semibold text-[#e6edf3] group-hover:text-[#388bfd]">{m.san}</span>
-                      <span className="text-[#7d8590] font-mono">{fmt(m.count)} {m.count === 1 ? 'partida' : 'partidas'}</span>
+                      <span className="font-mono font-semibold text-[#f1f4f8] group-hover:text-[#81b64c]">{m.san}</span>
+                      <span className="text-[#8f9db3] font-mono">{fmt(m.count)} {m.count === 1 ? 'partida' : 'partidas'}</span>
                     </div>
                     <ResultBar w={m.white} d={m.draws} b={m.black} />
                   </button>
@@ -205,16 +205,16 @@ export default function ExplorerPanel() {
               <li key={g.id}>
                 <button
                   onClick={() => openLocal(g.id)}
-                  className="w-full text-left px-2 py-1.5 rounded border border-[#30363d] bg-[#0d1117] hover:bg-[#21262d]"
+                  className="w-full text-left px-2 py-1.5 rounded border border-[#34435a] bg-[#1a2230] hover:bg-[#2a3648]"
                   title="Abrir esta partida nesta posição"
                 >
-                  <div className="text-xs text-[#e6edf3] truncate">
-                    {g.white}{g.white_elo ? <span className="text-[#7d8590]"> {g.white_elo}</span> : null}
-                    <span className="text-[#7d8590]"> x </span>
-                    {g.black}{g.black_elo ? <span className="text-[#7d8590]"> {g.black_elo}</span> : null}
-                    <span className="ml-2 font-mono text-[#7d8590]">{g.result}</span>
+                  <div className="text-xs text-[#f1f4f8] truncate">
+                    {g.white}{g.white_elo ? <span className="text-[#8f9db3]"> {g.white_elo}</span> : null}
+                    <span className="text-[#8f9db3]"> x </span>
+                    {g.black}{g.black_elo ? <span className="text-[#8f9db3]"> {g.black_elo}</span> : null}
+                    <span className="ml-2 font-mono text-[#8f9db3]">{g.result}</span>
                   </div>
-                  <div className="text-[10px] text-[#7d8590] truncate">{[g.event, g.game_date].filter(Boolean).join(' · ')}</div>
+                  <div className="text-[10px] text-[#8f9db3] truncate">{[g.event, g.game_date].filter(Boolean).join(' · ')}</div>
                 </button>
               </li>
             ))}
@@ -229,36 +229,36 @@ export default function ExplorerPanel() {
 
   return (
     <div className="space-y-3">
-      <div className="rounded-lg border border-[#30363d] bg-[#161b22] p-3">
-        <div className="text-[#7d8590] text-[10px] uppercase tracking-wider mb-1">Posição</div>
+      <div className="rounded-lg border border-[#34435a] bg-[#212b3a] p-3">
+        <div className="text-[#8f9db3] text-[10px] uppercase tracking-wider mb-1">Posição</div>
         {current ? (
-          <div className="text-sm text-[#e6edf3]">
-            <span className="font-mono font-semibold text-[#388bfd] mr-2">{current.eco}</span>
+          <div className="text-sm text-[#f1f4f8]">
+            <span className="font-mono font-semibold text-[#81b64c] mr-2">{current.eco}</span>
             {current.name}
           </div>
         ) : (
-          <div className="text-sm text-[#7d8590]">{currentIndex === 0 ? 'Posição inicial' : 'Fora do livro de aberturas'}</div>
+          <div className="text-sm text-[#8f9db3]">{currentIndex === 0 ? 'Posição inicial' : 'Fora do livro de aberturas'}</div>
         )}
       </div>
 
-      <Section title="Mestres · Lichess" right={m ? <span className="text-[10px] font-mono text-[#7d8590]">{fmt(mTotal)} partidas</span> : null}>
+      <Section title="Mestres · Lichess" right={m ? <span className="text-[10px] font-mono text-[#8f9db3]">{fmt(mTotal)} partidas</span> : null}>
         {!serverEngine ? (
-          <p className="text-[#7d8590] text-xs">Precisa do servidor (<code className="text-[#e6edf3]">pnpm server</code>).</p>
+          <p className="text-[#8f9db3] text-xs">Precisa do servidor (<code className="text-[#f1f4f8]">pnpm server</code>).</p>
         ) : !master ? (
-          <p className="text-[#7d8590] text-xs">Buscando…</p>
+          <p className="text-[#8f9db3] text-xs">Buscando…</p>
         ) : master.status === 'token-required' || master.status === 'token-rejected' ? (
           <TokenForm rejected={master.status === 'token-rejected'} onSaved={() => setMasterTick((t) => t + 1)} />
         ) : master.status === 'rate-limited' ? (
           <p className="text-amber-400 text-xs">O Lichess está limitando as requisições — espere um minuto e navegue de novo.</p>
         ) : master.status !== 'ok' ? (
-          <p className="text-[#7d8590] text-xs">Não foi possível acessar o Lichess agora (sem internet?).</p>
+          <p className="text-[#8f9db3] text-xs">Não foi possível acessar o Lichess agora (sem internet?).</p>
         ) : mTotal === 0 ? (
-          <p className="text-[#7d8590] text-xs">Nenhuma partida de mestres chegou a esta posição.</p>
+          <p className="text-[#8f9db3] text-xs">Nenhuma partida de mestres chegou a esta posição.</p>
         ) : (
           <div className="space-y-3">
             <table className="w-full text-xs">
               <thead>
-                <tr className="text-[#484f58] text-[10px] uppercase">
+                <tr className="text-[#5f6d83] text-[10px] uppercase">
                   <th className="text-left font-normal pb-1">Lance</th>
                   <th className="text-right font-normal pb-1 pr-2">Partidas</th>
                   <th className="text-right font-normal pb-1 pr-2" title="Rating médio">Elo</th>
@@ -272,14 +272,14 @@ export default function ExplorerPanel() {
                     <tr
                       key={mv.uci}
                       onClick={() => playSan(mv.san)}
-                      className="cursor-pointer hover:bg-[#21262d]"
+                      className="cursor-pointer hover:bg-[#2a3648]"
                       title="Jogar este lance"
                     >
-                      <td className="py-1 font-mono font-semibold text-[#e6edf3]">{mv.san}</td>
-                      <td className="py-1 pr-2 text-right font-mono text-[#7d8590]">
-                        {fmt(n)} <span className="text-[#484f58]">{Math.round((n / mTotal) * 100)}%</span>
+                      <td className="py-1 font-mono font-semibold text-[#f1f4f8]">{mv.san}</td>
+                      <td className="py-1 pr-2 text-right font-mono text-[#8f9db3]">
+                        {fmt(n)} <span className="text-[#5f6d83]">{Math.round((n / mTotal) * 100)}%</span>
                       </td>
-                      <td className="py-1 pr-2 text-right font-mono text-[#7d8590]">{mv.averageRating}</td>
+                      <td className="py-1 pr-2 text-right font-mono text-[#8f9db3]">{mv.averageRating}</td>
                       <td className="py-1">
                         <ResultBar w={mv.white} d={mv.draws} b={mv.black} />
                       </td>
@@ -295,15 +295,15 @@ export default function ExplorerPanel() {
                     <button
                       onClick={() => openMaster(g.id)}
                       disabled={opening !== null}
-                      className="w-full text-left px-2 py-1.5 rounded border border-[#30363d] bg-[#0d1117] hover:bg-[#21262d] disabled:opacity-60"
+                      className="w-full text-left px-2 py-1.5 rounded border border-[#34435a] bg-[#1a2230] hover:bg-[#2a3648] disabled:opacity-60"
                       title="Abrir esta partida nesta posição"
                     >
-                      <div className="text-xs text-[#e6edf3] truncate">
-                        {g.white.name} <span className="text-[#7d8590]">{g.white.rating}</span>
-                        <span className="text-[#7d8590]"> x </span>
-                        {g.black.name} <span className="text-[#7d8590]">{g.black.rating}</span>
+                      <div className="text-xs text-[#f1f4f8] truncate">
+                        {g.white.name} <span className="text-[#8f9db3]">{g.white.rating}</span>
+                        <span className="text-[#8f9db3]"> x </span>
+                        {g.black.name} <span className="text-[#8f9db3]">{g.black.rating}</span>
                       </div>
-                      <div className="text-[10px] text-[#7d8590]">
+                      <div className="text-[10px] text-[#8f9db3]">
                         {g.year} · {g.winner === 'white' ? '1-0' : g.winner === 'black' ? '0-1' : '½-½'}
                         {opening === g.id ? ' · abrindo…' : ''}
                       </div>
@@ -320,9 +320,9 @@ export default function ExplorerPanel() {
 
       <Section title="Lances de livro">
         {!bookReady ? (
-          <p className="text-[#7d8590] text-xs">Carregando livro de aberturas…</p>
+          <p className="text-[#8f9db3] text-xs">Carregando livro de aberturas…</p>
         ) : book.length === 0 ? (
-          <p className="text-[#7d8590] text-xs">Nenhuma continuação de livro a partir desta posição.</p>
+          <p className="text-[#8f9db3] text-xs">Nenhuma continuação de livro a partir desta posição.</p>
         ) : (
           <ul className="space-y-1">
             {book.map((b) => (
@@ -330,11 +330,11 @@ export default function ExplorerPanel() {
                 <button
                   onClick={() => playSan(b.san)}
                   title="Jogar este lance"
-                  className="w-full flex items-baseline gap-2 px-2 py-1.5 rounded border border-[#30363d] bg-[#0d1117] hover:bg-[#21262d] text-left"
+                  className="w-full flex items-baseline gap-2 px-2 py-1.5 rounded border border-[#34435a] bg-[#1a2230] hover:bg-[#2a3648] text-left"
                 >
-                  <span className="font-mono font-semibold text-sm text-[#e6edf3] w-12 shrink-0">{b.san}</span>
-                  <span className="text-[#7d8590] text-[11px] truncate flex-1">{b.name}</span>
-                  <span className="font-mono text-[10px] text-[#484f58]">{b.eco}</span>
+                  <span className="font-mono font-semibold text-sm text-[#f1f4f8] w-12 shrink-0">{b.san}</span>
+                  <span className="text-[#8f9db3] text-[11px] truncate flex-1">{b.name}</span>
+                  <span className="font-mono text-[10px] text-[#5f6d83]">{b.eco}</span>
                 </button>
               </li>
             ))}
@@ -346,7 +346,7 @@ export default function ExplorerPanel() {
         ? localSection('Nas suas partidas salvas', mine, 'Nenhuma partida salva chegou a esta posição.')
         : (
           <Section title="Nas suas partidas salvas">
-            <p className="text-[#7d8590] text-xs">Precisa do servidor (<code className="text-[#e6edf3]">pnpm server</code>).</p>
+            <p className="text-[#8f9db3] text-xs">Precisa do servidor (<code className="text-[#f1f4f8]">pnpm server</code>).</p>
           </Section>
         )}
     </div>

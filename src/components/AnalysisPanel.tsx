@@ -4,7 +4,7 @@ import type { EngineLineResult, MoveAnalysis, MoveClassification, EvalScore } fr
 import { formatEval, criticalityTier } from '../engine/ChessEngine'
 import { wpFor, evalToPawns } from '../engine/metrics'
 import TopLines from './TopLines'
-import EngineSettings from './EngineSettings'
+import EngineSettings, { ThresholdControl } from './EngineSettings'
 import ToMoveCard from './ToMoveCard'
 
 const CLASS_META: Record<MoveClassification, { label: string; color: string; bg: string; symbol: string }> = {
@@ -24,10 +24,10 @@ function MetricBar({ label, value, color, hint }: { label: string; value: number
   return (
     <div title={hint}>
       <div className="flex justify-between items-center mb-1">
-        <span className="text-[#7d8590] text-xs uppercase tracking-wider">{label}</span>
-        <span className="text-[#e6edf3] text-xs font-mono font-bold">{pct(value)}%</span>
+        <span className="text-[#8f9db3] text-xs uppercase tracking-wider">{label}</span>
+        <span className="text-[#f1f4f8] text-xs font-mono font-bold">{pct(value)}%</span>
       </div>
-      <div className="h-1.5 rounded-full bg-[#21262d] overflow-hidden">
+      <div className="h-1.5 rounded-full bg-[#2a3648] overflow-hidden">
         <div
           className="h-full rounded-full transition-all duration-700 ease-out"
           style={{ width: `${pct(value)}%`, backgroundColor: color }}
@@ -52,14 +52,14 @@ function CriticalityBadge({ score }: { score: number }) {
 function Stat({ label, value, color }: { label: string; value: string; color?: string }) {
   return (
     <div>
-      <div className="text-[#7d8590] text-[10px] uppercase mb-1">{label}</div>
-      <div className="font-mono text-sm font-semibold" style={{ color: color ?? '#e6edf3' }}>{value}</div>
+      <div className="text-[#8f9db3] text-[10px] uppercase mb-1">{label}</div>
+      <div className="font-mono text-sm font-semibold" style={{ color: color ?? '#f1f4f8' }}>{value}</div>
     </div>
   )
 }
 
 function EvalChange({ before, after, delta }: { before: EvalScore | null; after: EvalScore | null; delta: number }) {
-  const deltaColor = Math.abs(delta) < 0.05 ? '#7d8590' : delta > 0 ? '#22c55e' : '#ef4444'
+  const deltaColor = Math.abs(delta) < 0.05 ? '#8f9db3' : delta > 0 ? '#22c55e' : '#ef4444'
   return (
     <div className="grid grid-cols-3 gap-2 text-center">
       <Stat label="Antes" value={formatEval(before)} />
@@ -95,7 +95,7 @@ function WhyDifficult({ move }: { move: MoveAnalysis }) {
       )
     }
   }
-  return <p className="text-[#8b949e] text-xs leading-relaxed">{reasons.join(' ')}</p>
+  return <p className="text-[#a3afc2] text-xs leading-relaxed">{reasons.join(' ')}</p>
 }
 
 /** Bars for the top lines from the mover's point of view, so a lone good move stands out. */
@@ -107,37 +107,18 @@ function LinesChart({ lines, color }: { lines: EngineLineResult[]; color: 'w' | 
         const pawns = evalToPawns(l.scoreWhitePerspective) * (color === 'w' ? 1 : -1)
         return (
           <div key={i} className="flex items-center gap-2 text-[11px] font-mono">
-            <span className="w-12 truncate text-[#e6edf3]">{l.san?.[0] ?? l.pv[0]}</span>
-            <span className="w-12 text-right text-[#7d8590]">{formatEval(l.scoreWhitePerspective)}</span>
-            <div className="flex-1 h-2 rounded bg-[#21262d] overflow-hidden">
+            <span className="w-12 truncate text-[#f1f4f8]">{l.san?.[0] ?? l.pv[0]}</span>
+            <span className="w-12 text-right text-[#8f9db3]">{formatEval(l.scoreWhitePerspective)}</span>
+            <div className="flex-1 h-2 rounded bg-[#2a3648] overflow-hidden">
               <div
                 className="h-full rounded transition-all duration-500"
-                style={{ width: `${Math.max(1.5, wps[i] * 100)}%`, backgroundColor: i === 0 ? '#388bfd' : pawns >= 0 ? '#484f58' : '#6e4046' }}
+                style={{ width: `${Math.max(1.5, wps[i] * 100)}%`, backgroundColor: i === 0 ? '#81b64c' : pawns >= 0 ? '#5f6d83' : '#6e4046' }}
               />
             </div>
           </div>
         )
       })}
     </div>
-  )
-}
-
-function ThresholdControl() {
-  const { onlyMoveThreshold, setOnlyMoveThreshold } = useGame()
-  return (
-    <label className="flex items-center gap-2 text-[10px] text-[#7d8590]" title="Quanto a 2ª melhor linha precisa perder (em pontos de chance de vitória) para marcar LANCE ÚNICO">
-      <span className="uppercase tracking-wider shrink-0">Limite do lance único</span>
-      <input
-        type="range"
-        min={5}
-        max={40}
-        step={1}
-        value={Math.round(onlyMoveThreshold * 100)}
-        onChange={(e) => setOnlyMoveThreshold(parseInt(e.target.value) / 100)}
-        className="flex-1 accent-[#388bfd]"
-      />
-      <span className="font-mono w-8 text-right">{Math.round(onlyMoveThreshold * 100)}%</span>
-    </label>
   )
 }
 
@@ -162,8 +143,8 @@ export default function AnalysisPanel({ onPreviewLine }: Props) {
   if (!engineReady) {
     return (
       <div className="flex flex-col items-center justify-center h-40 gap-3">
-        <div className="w-6 h-6 border-2 border-[#388bfd] border-t-transparent rounded-full animate-spin" />
-        <p className="text-[#7d8590] text-sm">Carregando motor…</p>
+        <div className="w-6 h-6 border-2 border-[#81b64c] border-t-transparent rounded-full animate-spin" />
+        <p className="text-[#8f9db3] text-sm">Carregando motor…</p>
       </div>
     )
   }
@@ -175,13 +156,13 @@ export default function AnalysisPanel({ onPreviewLine }: Props) {
     return (
       <div className="space-y-4">
         <ToMoveCard onPreviewLine={onPreviewLine} />
-        <div className="rounded-lg border border-[#30363d] bg-[#161b22] p-4">
-          <div className="text-[#7d8590] text-xs uppercase tracking-wider mb-2">Avaliação ao vivo</div>
-          <div className="text-2xl font-mono font-bold text-[#e6edf3]">
+        <div className="rounded-lg border border-[#34435a] bg-[#212b3a] p-4">
+          <div className="text-[#8f9db3] text-xs uppercase tracking-wider mb-2">Avaliação ao vivo</div>
+          <div className="text-2xl font-mono font-bold text-[#f1f4f8]">
             {liveEval ? formatEval(liveEval) : '—'}
           </div>
         </div>
-        <div className="text-center text-[#7d8590] text-sm py-2">
+        <div className="text-center text-[#8f9db3] text-sm py-2">
           Jogue um lance ou navegue até um para ver a análise
         </div>
         <ThresholdControl />
@@ -199,29 +180,29 @@ export default function AnalysisPanel({ onPreviewLine }: Props) {
     return (
       <div className="space-y-4">
         <ToMoveCard onPreviewLine={onPreviewLine} />
-        <div className="rounded-lg border border-[#30363d] bg-[#161b22] p-4">
-          <div className="text-[#7d8590] text-xs uppercase tracking-wider mb-2">Seu lance</div>
-          <div className="text-xl font-mono font-semibold text-[#e6edf3]">{move.san}</div>
+        <div className="rounded-lg border border-[#34435a] bg-[#212b3a] p-4">
+          <div className="text-[#8f9db3] text-xs uppercase tracking-wider mb-2">Seu lance</div>
+          <div className="text-xl font-mono font-semibold text-[#f1f4f8]">{move.san}</div>
         </div>
 
-        <div className="rounded-lg border border-[#30363d] bg-[#161b22] p-4 space-y-3">
+        <div className="rounded-lg border border-[#34435a] bg-[#212b3a] p-4 space-y-3">
           {move.isAnalyzed ? (
             <>
-              <p className="text-[#e6edf3] text-sm">
+              <p className="text-[#f1f4f8] text-sm">
                 {move.quality >= 0.9
                   ? '✓ Lance forte — você manteve a avaliação.'
                   : `Você perdeu ${lost.toFixed(1)} pontos de avaliação.`}
               </p>
               {move.difficulty >= 0.6 && (
-                <p className="text-[#7d8590] text-xs">Esta era uma posição de alta dificuldade.</p>
+                <p className="text-[#8f9db3] text-xs">Esta era uma posição de alta dificuldade.</p>
               )}
               {move.criticality > 0.75 && (
-                <p className="text-[#7d8590] text-xs">Muita coisa dependia desta decisão.</p>
+                <p className="text-[#8f9db3] text-xs">Muita coisa dependia desta decisão.</p>
               )}
-              {move.quality < 0.9 && <p className="text-[#7d8590] text-xs">Quer tentar novamente?</p>}
+              {move.quality < 0.9 && <p className="text-[#8f9db3] text-xs">Quer tentar novamente?</p>}
             </>
           ) : (
-            <p className="text-[#7d8590] text-sm">Analisando…</p>
+            <p className="text-[#8f9db3] text-sm">Analisando…</p>
           )}
         </div>
 
@@ -229,14 +210,14 @@ export default function AnalysisPanel({ onPreviewLine }: Props) {
           {isLast && (
             <button
               onClick={retryMove}
-              className="flex-1 py-2.5 rounded-lg bg-[#388bfd] text-white text-sm font-medium hover:bg-[#4c96ff] transition-colors"
+              className="flex-1 py-2.5 rounded-lg bg-[#81b64c] text-white text-sm font-medium hover:bg-[#95c95f] transition-colors"
             >
               Tentar novamente
             </button>
           )}
           <button
             onClick={revealTraining}
-            className="flex-1 py-2.5 rounded-lg border border-[#388bfd]/40 text-[#388bfd] text-sm font-medium hover:bg-[#388bfd]/10 transition-colors"
+            className="flex-1 py-2.5 rounded-lg border border-[#81b64c]/40 text-[#81b64c] text-sm font-medium hover:bg-[#81b64c]/10 transition-colors"
           >
             Mostrar melhor lance
           </button>
@@ -254,8 +235,8 @@ export default function AnalysisPanel({ onPreviewLine }: Props) {
         style={{ borderColor: classMeta.color + '40', backgroundColor: classMeta.bg }}
       >
         <div className="flex items-center justify-between mb-1.5">
-          <span className="text-2xl font-mono font-bold text-[#e6edf3]">
-            <span className="text-sm text-[#7d8590] mr-1">{move.moveNumber}{move.color === 'w' ? '.' : '…'}</span>
+          <span className="text-2xl font-mono font-bold text-[#f1f4f8]">
+            <span className="text-sm text-[#8f9db3] mr-1">{move.moveNumber}{move.color === 'w' ? '.' : '…'}</span>
             {move.san}
             {classMeta.symbol && (
               <span style={{ color: classMeta.color }} className="ml-1 text-lg">{classMeta.symbol}</span>
@@ -284,31 +265,31 @@ export default function AnalysisPanel({ onPreviewLine }: Props) {
       </div>
 
       {!move.isAnalyzed ? (
-        <div className="rounded-lg border border-[#30363d] bg-[#161b22] p-3 flex items-center gap-2">
-          <div className="w-4 h-4 border-2 border-[#388bfd] border-t-transparent rounded-full animate-spin shrink-0" />
-          <span className="text-[#7d8590] text-sm">Analisando…</span>
+        <div className="rounded-lg border border-[#34435a] bg-[#212b3a] p-3 flex items-center gap-2">
+          <div className="w-4 h-4 border-2 border-[#81b64c] border-t-transparent rounded-full animate-spin shrink-0" />
+          <span className="text-[#8f9db3] text-sm">Analisando…</span>
         </div>
       ) : (
         <>
           {/* Three independent metrics */}
-          <div className="rounded-lg border border-[#30363d] bg-[#161b22] p-3 space-y-3">
+          <div className="rounded-lg border border-[#34435a] bg-[#212b3a] p-3 space-y-3">
             <MetricBar label="Qualidade do lance" value={move.quality} color={classMeta.color} hint="Quão bom foi o lance comparado ao melhor do motor." />
             <MetricBar label="Dificuldade" value={move.difficulty} color="#8b5cf6" hint="Estimativa heurística de quão difícil era achar o melhor lance. Não é uma probabilidade estatística." />
             <MetricBar label="Criticidade" value={move.criticality} color="#f97316" hint="Quanto o resultado dependia de escolher bem nesta posição." />
           </div>
 
           {/* Eval change */}
-          <div className="rounded-lg border border-[#30363d] bg-[#161b22] p-3 space-y-3">
+          <div className="rounded-lg border border-[#34435a] bg-[#212b3a] p-3 space-y-3">
             <EvalChange before={move.evalBefore} after={move.evalAfter} delta={move.evalDelta} />
-            <div className="flex items-center justify-between border-t border-[#21262d] pt-2">
-              <span className="text-[#7d8590] text-xs uppercase tracking-wider">Melhor lance</span>
-              <span className="text-[#e6edf3] text-sm font-mono">
+            <div className="flex items-center justify-between border-t border-[#2a3648] pt-2">
+              <span className="text-[#8f9db3] text-xs uppercase tracking-wider">Melhor lance</span>
+              <span className="text-[#f1f4f8] text-sm font-mono">
                 {playedBest ? 'Você jogou ele' : (move.bestMoveSan ?? '—')}
               </span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-[#7d8590] text-xs uppercase tracking-wider" title="Estimado a partir da busca do motor; não é uma verdade absoluta.">Cálculo</span>
-              <span className="text-[#e6edf3] text-sm font-mono">
+              <span className="text-[#8f9db3] text-xs uppercase tracking-wider" title="Estimado a partir da busca do motor; não é uma verdade absoluta.">Cálculo</span>
+              <span className="text-[#f1f4f8] text-sm font-mono">
                 ≈ {move.calculationDepth} meios-lances{move.calculationDepth >= 2 ? ` (≈ ${Math.ceil(move.calculationDepth / 2)} lances à frente)` : ''}
               </span>
             </div>
@@ -316,16 +297,16 @@ export default function AnalysisPanel({ onPreviewLine }: Props) {
 
           {/* Why difficult */}
           {(move.difficulty > 0.3 || move.isOnlyMove || move.traps.length >= 2) && (
-            <div className="rounded-lg border border-[#30363d] bg-[#161b22] p-3">
-              <div className="text-[#7d8590] text-[10px] uppercase tracking-wider mb-2">Por que este lance é difícil?</div>
+            <div className="rounded-lg border border-[#34435a] bg-[#212b3a] p-3">
+              <div className="text-[#8f9db3] text-[10px] uppercase tracking-wider mb-2">Por que este lance é difícil?</div>
               <WhyDifficult move={move} />
             </div>
           )}
 
           {/* Alternatives */}
           {move.topLinesBefore.length > 1 && (
-            <div className="rounded-lg border border-[#30363d] bg-[#161b22] p-3">
-              <div className="text-[#7d8590] text-[10px] uppercase tracking-wider mb-2">Alternativas</div>
+            <div className="rounded-lg border border-[#34435a] bg-[#212b3a] p-3">
+              <div className="text-[#8f9db3] text-[10px] uppercase tracking-wider mb-2">Alternativas</div>
               <LinesChart lines={move.topLinesBefore} color={move.color} />
             </div>
           )}
@@ -334,7 +315,7 @@ export default function AnalysisPanel({ onPreviewLine }: Props) {
             <div>
               <button
                 onClick={() => setShowLines((v) => !v)}
-                className="w-full py-2 rounded-lg border border-[#30363d] text-[#7d8590] text-xs font-medium hover:bg-[#21262d] hover:text-[#e6edf3] transition-colors"
+                className="w-full py-2 rounded-lg border border-[#34435a] text-[#8f9db3] text-xs font-medium hover:bg-[#2a3648] hover:text-[#f1f4f8] transition-colors"
               >
                 {showLines ? '↑ Ocultar' : '↓ Ver'} as {move.topLinesBefore.length} principais linhas
               </button>

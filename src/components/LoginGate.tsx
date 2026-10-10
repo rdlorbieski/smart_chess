@@ -66,14 +66,14 @@ export default function LoginGate({ children }: { children: ReactNode }) {
   const card = (
     <div className="w-full max-w-sm">
       <div className="flex items-center justify-center gap-2 mb-6">
-        <span className="text-[#388bfd] text-2xl">♟</span>
+        <span className="text-[#81b64c] text-2xl">♟</span>
         <span className="font-display font-semibold text-xl tracking-tight">ChessMind</span>
       </div>
-      <div className="rounded-xl border border-[#21262d] bg-[#161b22] p-6">
-        {gate === 'loading' && <p className="text-sm text-[#7d8590] text-center">Carregando…</p>}
+      <div className="rounded-xl border border-[#2a3648] bg-[#212b3a] p-6">
+        {gate === 'loading' && <p className="text-sm text-[#8f9db3] text-center">Carregando…</p>}
         {gate === 'offline' && (
           <div className="flex flex-col gap-4 text-center">
-            <p className="text-sm text-[#7d8590]">O servidor não está respondendo.</p>
+            <p className="text-sm text-[#8f9db3]">O servidor não está respondendo.</p>
             <button onClick={check} className={buttonClass}>
               Tentar de novo
             </button>
@@ -97,18 +97,18 @@ export default function LoginGate({ children }: { children: ReactNode }) {
     return (
       <>
         {app}
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 text-[#e6edf3]">{card}</div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 text-[#f1f4f8]">{card}</div>
       </>
     )
   }
-  return <div className="min-h-screen bg-[#0d1117] text-[#e6edf3] flex items-center justify-center px-4">{card}</div>
+  return <div className="min-h-screen bg-[#1a2230] text-[#f1f4f8] flex items-center justify-center px-4">{card}</div>
 }
 
 const inputClass =
-  'w-full rounded-md border border-[#30363d] bg-[#0d1117] px-3 py-2 text-sm text-[#e6edf3] outline-none focus:border-[#388bfd]'
+  'w-full rounded-md border border-[#34435a] bg-[#1a2230] px-3 py-2 text-sm text-[#f1f4f8] outline-none focus:border-[#81b64c]'
 const buttonClass =
-  'w-full rounded-md bg-[#388bfd] px-3 py-2 text-sm font-medium text-white hover:bg-[#4493f8] disabled:opacity-50 disabled:cursor-not-allowed'
-const linkClass = 'text-xs text-[#7d8590] hover:text-[#e6edf3] underline-offset-2 hover:underline disabled:opacity-50'
+  'w-full rounded-md bg-[#81b64c] px-3 py-2 text-sm font-medium text-white hover:bg-[#95c95f] disabled:opacity-50 disabled:cursor-not-allowed'
+const linkClass = 'text-xs text-[#8f9db3] hover:text-[#f1f4f8] underline-offset-2 hover:underline disabled:opacity-50'
 
 function LoginForm({
   recovery,
@@ -159,8 +159,8 @@ function LoginForm({
   if (mode === 'code') {
     return (
       <form onSubmit={submitCode} className="flex flex-col gap-3">
-        <p className="text-sm text-[#7d8590]">
-          Enviamos um código de 6 dígitos para <span className="text-[#e6edf3]">{sentTo}</span>. Ele vale por 10 minutos.
+        <p className="text-sm text-[#8f9db3]">
+          Enviamos um código de 6 dígitos para <span className="text-[#f1f4f8]">{sentTo}</span>. Ele vale por 10 minutos.
         </p>
         <input
           className={`${inputClass} text-center font-mono text-lg tracking-[0.4em]`}
@@ -192,11 +192,11 @@ function LoginForm({
     <form onSubmit={submitPassword} className="flex flex-col gap-3">
       {notice && <p className="text-xs text-amber-400">{notice}</p>}
       <label className="flex flex-col gap-1">
-        <span className="text-xs text-[#7d8590]">Usuário</span>
+        <span className="text-xs text-[#8f9db3]">Usuário</span>
         <input className={inputClass} autoComplete="username" autoFocus value={user} onChange={(e) => setUser(e.target.value)} />
       </label>
       <label className="flex flex-col gap-1">
-        <span className="text-xs text-[#7d8590]">Senha</span>
+        <span className="text-xs text-[#8f9db3]">Senha</span>
         <input
           className={inputClass}
           type="password"

@@ -223,10 +223,10 @@ export default function ChessBoard({ previewMoves, onClearPreview }: Props) {
     <div className="w-full flex flex-col gap-1">
       {previewMoves && (
         <div className="flex items-center gap-2 px-1 py-0.5">
-          <span className="text-[#7d8590] text-xs">Visualizando linha do motor</span>
+          <span className="text-[#8f9db3] text-xs">Visualizando linha do motor</span>
           <button
             onClick={onClearPreview}
-            className="text-[#388bfd] text-xs hover:underline"
+            className="text-[#81b64c] text-xs hover:underline"
           >
             ✕ Limpar
           </button>
@@ -241,7 +241,7 @@ export default function ChessBoard({ previewMoves, onClearPreview }: Props) {
           >
             {/* .cg-wrap so chessground's own piece art (cburnett) applies; .cg-promo undoes board layout */}
             <div
-              className="cg-wrap cg-promo flex gap-2 rounded-xl bg-[#161b22] border border-[#30363d] p-3 shadow-2xl"
+              className="cg-wrap cg-promo flex gap-2 rounded-xl bg-[#212b3a] border border-[#34435a] p-3 shadow-2xl"
               onClick={(e) => e.stopPropagation()}
               role="dialog"
               aria-label="Escolha a peça da promoção"
@@ -251,7 +251,7 @@ export default function ChessBoard({ previewMoves, onClearPreview }: Props) {
                   key={p}
                   onClick={() => choosePromotion(p)}
                   title={{ q: 'Dama', r: 'Torre', b: 'Bispo', n: 'Cavalo' }[p]}
-                  className="w-16 h-16 rounded-lg bg-[#eeeed2] hover:bg-[#f6f669] transition-colors flex items-center justify-center"
+                  className="w-16 h-16 rounded-lg bg-[#ebecd0] hover:bg-[#f5f682] transition-colors flex items-center justify-center"
                 >
                   <CgPiece className={`${promo.color === 'w' ? 'white' : 'black'} ${{ q: 'queen', r: 'rook', b: 'bishop', n: 'knight' }[p]}`} />
                 </button>
