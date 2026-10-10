@@ -19,7 +19,7 @@ services:
     build:
       context: .
       target: web
-    container_name: smart-chess
+    container_name: lorbieski-chess-web
     restart: unless-stopped
     depends_on:
       - api

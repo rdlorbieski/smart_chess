@@ -103,7 +103,7 @@ Se mudar `SERVER_PORT`, use o mesmo valor ao subir o `pnpm dev`.
 
 Mesmo esquema do `fitame-validator-user`: o `docker-compose.yml` sobe dois containers a partir do mesmo `Dockerfile`:
 
-- `smart-chess` (`--target web`): nginx com o build do Vite, encaminhando `/api` para a API. Fica na rede externa `edge` da VPS, onde o proxy reverso aponta o domínio para ele (porta 80).
+- `lorbieski-chess-web` (`--target web`): nginx com o build do Vite, encaminhando `/api` para a API. Fica na rede externa `edge` da VPS, onde o Caddy (`infra-edge`) aponta `chess.lorbieski.com.br` para ele (`reverse_proxy lorbieski-chess-web:80`).
 - `smart-chess-api` (`--target api`): Node 24 + Stockfish nativo (baixado do release oficial no build) + SQLite. Não publica porta; o banco e o token do Lichess ficam no volume `smart-chess-data` (`/app/data`), que sobrevive aos rebuilds.
 
 ```bash
