@@ -318,11 +318,19 @@ export function analyzeTraps(
   const atGlance = lossMap(glance.scores)
   const atDepth = lossMap(deep.scores)
 
-  const plausible = [...atGlance].filter(([, l]) => l < PLAUSIBLE_WINDOW).map(([uci]) => uci)
-  const traps = plausible
-    .filter((uci) => (atDepth.get(uci) ?? 0) >= TRAP_LOSS)
-    .map((uci) => ({ uci, san: uciToSan(scan.fen, uci), loss: atDepth.get(uci) ?? 0 }))
-    .sort((a, b) => b.loss - a.loss)
+  // Moves that leave material en prise are sacrifices, not natural-looking moves: a shallow
+  // search may think the material comes back (horizon effect), but no human sees them as
+  // quiet. Failing ones are reported apart and kept out of the trap statistics.
+  const glanceFine = [...atGlance].filter(([, l]) => l < PLAUSIBLE_WINDOW).map(([uci]) => uci)
+  const sacrificial = new Set(glanceFine.filter((uci) => hangsMaterial(scan.fen, uci)))
+  const plausible = glanceFine.filter((uci) => !sacrificial.has(uci))
+  const failing = (ucis: string[]) =>
+    ucis
+      .filter((uci) => (atDepth.get(uci) ?? 0) >= TRAP_LOSS)
+      .map((uci) => ({ uci, san: uciToSan(scan.fen, uci), loss: atDepth.get(uci) ?? 0, pv: glance.pvs?.[uci] }))
+      .sort((a, b) => b.loss - a.loss)
+  const traps = failing(plausible)
+  const sacrifices = failing([...sacrificial])
   const goodMoves = [...atDepth.values()].filter((l) => l <= config.acceptableWindow).length
   const trapShare = plausible.length ? traps.length / plausible.length : 0
   const meanLoss = traps.length ? traps.reduce((a, t) => a + Math.min(t.loss, 0.4), 0) / traps.length : 0
@@ -333,12 +341,42 @@ export function analyzeTraps(
     legal: scan.legalMoves,
     plausible: plausible.length,
     traps,
+    sacrifices,
     trapShare,
     goodMoves,
     // Share alone overreacts in openings (2 of 9 natural moves failing is normal there), so
     // the signal also needs several traps before it saturates.
     signal: clamp01(trapShare / 0.4) * clamp01(traps.length / 5) * (0.6 + 0.4 * clamp01(meanLoss / 0.2)),
   }
+}
+
+/**
+ * Static exchange on `square` for the side to move: material it nets by capturing there with
+ * its least valuable piece, the opponent recapturing the same way (legal moves, so pins count).
+ */
+function staticExchange(chess: Chess, square: string): number {
+  const captures = chess.moves({ verbose: true }).filter((m) => m.to === square && m.captured)
+  if (!captures.length) return 0
+  const m = captures.reduce((a, b) => (PIECE_VALUE[b.piece] < PIECE_VALUE[a.piece] ? b : a))
+  chess.move(m)
+  const gain = PIECE_VALUE[m.captured!] + (m.promotion ? PIECE_VALUE[m.promotion] - 1 : 0) - staticExchange(chess, square)
+  chess.undo()
+  return Math.max(0, gain)
+}
+
+/**
+ * True when, after `uci`, the opponent can win at least two pawns of material by a plain
+ * capture sequence — net of what the move itself took (a trade like BxN NxB is not a sacrifice).
+ */
+export function hangsMaterial(fen: string, uci: string): boolean {
+  const chess = new Chess(fen)
+  const move = playUci(chess, uci)
+  if (!move) return false
+  const taken = move.captured ? PIECE_VALUE[move.captured] : 0
+  const targets = new Set(chess.moves({ verbose: true }).filter((m) => m.captured).map((m) => m.to))
+  let worst = 0
+  for (const sq of targets) worst = Math.max(worst, staticExchange(chess, sq))
+  return worst - taken >= 2
 }
 
 function uciToSan(fen: string, uci: string): string {

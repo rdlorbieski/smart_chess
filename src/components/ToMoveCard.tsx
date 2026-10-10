@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Chess } from 'chess.js'
 import { useGame } from '../store/GameContext'
-import { criticalityTier, formatEval } from '../engine/ChessEngine'
+import { criticalityTier, formatEval, pvToSan } from '../engine/ChessEngine'
 import { wpFor } from '../engine/metrics'
 import { moveNumberLabel, numberedTokens } from '../lib/notation'
 
@@ -21,6 +21,46 @@ function Bar({ label, value, color }: { label: string; value: number; color: str
 }
 
 /**
+ * Moves that look fine at the glance depth but lose deeper: the move, how much it loses, and
+ * the best line with it at the glance depth (why it looks fine). Click to see it on the board.
+ */
+function GlanceList({ moves, depth, fen, hover, onPreviewLine }: {
+  moves: { uci: string; san: string; loss: number; pv?: string[] }[]
+  depth: number
+  fen: string
+  hover: string
+  onPreviewLine?: (moves: string[]) => void
+}) {
+  return (
+    <div className="space-y-1">
+      {moves.map((t) => {
+        const line = t.pv?.length ? numberedTokens(pvToSan(fen, t.pv), fen) : []
+        return (
+          <button
+            key={t.uci}
+            onClick={() => t.pv && onPreviewLine?.(t.pv)}
+            title={`Melhor linha com ${t.san} na profundidade ${depth} — clique para ver no tabuleiro`}
+            className={`w-full flex items-start gap-2 text-left rounded px-1 py-0.5 ${hover}`}
+          >
+            <span className="shrink-0 px-1.5 py-0.5 rounded bg-[#1a2230] border border-[#34435a] font-mono text-[11px] text-[#f1f4f8]">
+              {t.san}{' '}
+              <span style={{ color: t.loss >= 0.2 ? '#ef4444' : t.loss >= 0.14 ? '#f87171' : '#fca5a5' }}>
+                −{Math.round(t.loss * 100)}%
+              </span>
+            </span>
+            {line.length > 0 && (
+              <span className="min-w-0 pt-0.5 font-mono text-[11px] leading-snug text-[#a3afc2]">
+                <span className="text-[#5f6d83]">prof. {depth}:</span> {line.join(' ')}
+              </span>
+            )}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
+/**
  * How hard and how critical the decision is for the side that has NOT moved yet in the
  * displayed position — what a player faces at the board. Never reveals the best move.
  */
@@ -28,10 +68,12 @@ export default function ToMoveCard({ onPreviewLine }: { onPreviewLine?: (moves: 
   const { currentFen, livePosition, playerWhite, playerBlack, engine, mode, trainingReveal } = useGame()
   const [open, setOpen] = useState(false)
   const [trapsOpen, setTrapsOpen] = useState(false)
+  const [sacsOpen, setSacsOpen] = useState(false)
   // Collapse when the position changes so the lists never show moves from another position.
   useEffect(() => {
     setOpen(false)
     setTrapsOpen(false)
+    setSacsOpen(false)
   }, [currentFen])
 
   const chess = new Chess(currentFen)
@@ -103,16 +145,30 @@ export default function ToMoveCard({ onPreviewLine }: { onPreviewLine?: (moves: 
               <span className="px-2 py-0.5 rounded bg-[#2a3648] text-[#5f6d83] animate-pulse" title="Varrendo todos os lances legais em busca de armadilhas">
                 varrendo todos os lances…
               </span>
-            ) : ready.traps && ready.traps.traps.length > 0 ? (
-              <button
-                onClick={() => setTrapsOpen((o) => !o)}
-                disabled={locked}
-                title={locked ? 'Oculto no modo Treino até revelar o melhor lance' : 'Lances de aparência natural que falham com cálculo mais fundo'}
-                className={`px-2 py-0.5 rounded bg-red-500/15 text-red-300 font-semibold ${locked ? 'cursor-not-allowed opacity-70' : 'hover:bg-red-500/25'}`}
-              >
-                ⚠ {ready.traps.traps.length} {ready.traps.traps.length === 1 ? 'armadilha oculta' : 'armadilhas ocultas'} {locked ? '🔒' : trapsOpen ? '▴' : '▾'}
-              </button>
-            ) : null}
+            ) : (
+              <>
+                {ready.traps && ready.traps.traps.length > 0 && (
+                  <button
+                    onClick={() => setTrapsOpen((o) => !o)}
+                    disabled={locked}
+                    title={locked ? 'Oculto no modo Treino até revelar o melhor lance' : 'Lances de aparência natural que falham com cálculo mais fundo'}
+                    className={`px-2 py-0.5 rounded bg-red-500/15 text-red-300 font-semibold ${locked ? 'cursor-not-allowed opacity-70' : 'hover:bg-red-500/25'}`}
+                  >
+                    ⚠ {ready.traps.traps.length} {ready.traps.traps.length === 1 ? 'armadilha oculta' : 'armadilhas ocultas'} {locked ? '🔒' : trapsOpen ? '▴' : '▾'}
+                  </button>
+                )}
+                {ready.traps && ready.traps.sacrifices.length > 0 && (
+                  <button
+                    onClick={() => setSacsOpen((o) => !o)}
+                    disabled={locked}
+                    title={locked ? 'Oculto no modo Treino até revelar o melhor lance' : 'Lances que entregam material e parecem compensar num olhar rápido, mas não compensam'}
+                    className={`px-2 py-0.5 rounded bg-orange-500/15 text-orange-300 font-semibold ${locked ? 'cursor-not-allowed opacity-70' : 'hover:bg-orange-500/25'}`}
+                  >
+                    ⚔ {ready.traps.sacrifices.length} {ready.traps.sacrifices.length === 1 ? 'sacrifício que falha' : 'sacrifícios que falham'} {locked ? '🔒' : sacsOpen ? '▴' : '▾'}
+                  </button>
+                )}
+              </>
+            )}
           </div>
 
           {trapsOpen && !locked && ready.traps && ready.traps.traps.length > 0 && (
@@ -122,16 +178,18 @@ export default function ToMoveCard({ onPreviewLine }: { onPreviewLine?: (moves: 
                 {ready.traps.deepDepth}). {ready.traps.traps.length} dos {ready.traps.plausible} lances naturais são
                 armadilhas; {ready.traps.goodMoves} dos {ready.traps.legal} lances legais seguram a posição.
               </p>
-              <div className="flex flex-wrap gap-1">
-                {ready.traps.traps.map((t) => (
-                  <span key={t.uci} className="px-1.5 py-0.5 rounded bg-[#1a2230] border border-[#34435a] font-mono text-[11px] text-[#f1f4f8]">
-                    {t.san}{' '}
-                    <span style={{ color: t.loss >= 0.2 ? '#ef4444' : t.loss >= 0.14 ? '#f87171' : '#fca5a5' }}>
-                      −{Math.round(t.loss * 100)}%
-                    </span>
-                  </span>
-                ))}
-              </div>
+              <GlanceList moves={ready.traps.traps} depth={ready.traps.glanceDepth} fen={currentFen} hover="hover:bg-red-500/10" onPreviewLine={onPreviewLine} />
+            </div>
+          )}
+
+          {sacsOpen && !locked && ready.traps && ready.traps.sacrifices.length > 0 && (
+            <div className="rounded border border-orange-500/20 bg-orange-500/5 p-2 space-y-1.5">
+              <p className="text-[#a3afc2] text-[11px] leading-relaxed">
+                Deixam material para ser capturado. Num olhar rápido (profundidade {ready.traps.glanceDepth}) parece que ele volta
+                ou que há compensação, mas com cálculo mais fundo (profundidade {ready.traps.deepDepth}) não compensa. Não contam
+                como armadilhas ocultas.
+              </p>
+              <GlanceList moves={ready.traps.sacrifices} depth={ready.traps.glanceDepth} fen={currentFen} hover="hover:bg-orange-500/10" onPreviewLine={onPreviewLine} />
             </div>
           )}
 

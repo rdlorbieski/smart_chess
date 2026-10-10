@@ -42,7 +42,7 @@ export interface AnalysisResult {
   history: DepthSnapshot[]
   legalMoves: number
   /** Only for full-width scans (MultiPV = every legal move): score of each move per completed depth (white perspective). */
-  moveScores?: { depth: number; scores: Record<string, EvalScore> }[]
+  moveScores?: { depth: number; scores: Record<string, EvalScore>; pvs?: Record<string, string[]> }[]
 }
 
 /**
@@ -54,7 +54,12 @@ export interface TrapInfo {
   deepDepth: number
   legal: number
   plausible: number // moves that look fine at a glance
-  traps: { uci: string; san: string; loss: number }[] // plausible moves that lose >= 10 win-probability points
+  // plausible moves that lose >= 10 win-probability points; `pv` = the line (UCI) that made
+  // the move look fine at the glance depth
+  traps: { uci: string; san: string; loss: number; pv?: string[] }[]
+  // moves that leave material en prise, look fine at the glance depth and fail deeper
+  // (kept out of `plausible`, `traps` and the signal: no human sees them as quiet moves)
+  sacrifices: { uci: string; san: string; loss: number; pv?: string[] }[]
   trapShare: number // traps / plausible
   goodMoves: number // moves within the acceptable window at depth
   signal: number // 0–1 contribution to criticality / difficulty

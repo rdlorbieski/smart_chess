@@ -101,6 +101,8 @@ interface Job {
   complete: { depth: number; lines: Map<number, EngineLineResult> } | null
   /** Scan mode: depth -> (first move -> score, white perspective). */
   moveScores: Map<number, Record<string, EvalScore>> | null
+  /** Scan mode: depth -> (first move -> principal variation, UCI). */
+  movePvs: Map<number, Record<string, string[]>> | null
   cancelled: boolean
   abort?: AbortController
   resolve: (r: AnalysisResult) => void
@@ -253,6 +255,11 @@ export class ChessEngine {
       level[parsed.pv[0]] = lineResult.scoreWhitePerspective
       job.moveScores.set(depth, level)
     }
+    if (job.movePvs) {
+      const level = job.movePvs.get(depth) ?? {}
+      level[parsed.pv[0]] = parsed.pv
+      job.movePvs.set(depth, level)
+    }
     if (depth > job.bestDepth) job.bestDepth = depth
     // A time-limited search can stop mid-iteration, leaving lines from two different depths
     // (even the same move twice). Only the last completed iteration is trustworthy.
@@ -292,7 +299,7 @@ export class ChessEngine {
     if (job.moveScores) {
       result.moveScores = [...job.moveScores]
         .sort((a, b) => a[0] - b[0])
-        .map(([depth, scores]) => ({ depth, scores }))
+        .map(([depth, scores]) => ({ depth, scores, pvs: job.movePvs?.get(depth) }))
       this.scanCache.set(job.fen, result)
       return result
     }
@@ -423,6 +430,7 @@ export class ChessEngine {
         history: [],
         complete: null,
         moveScores: opts.scan ? new Map() : null,
+        movePvs: opts.scan ? new Map() : null,
         cancelled: false,
         resolve,
         reject,
