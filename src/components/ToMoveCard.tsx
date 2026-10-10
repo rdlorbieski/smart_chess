@@ -29,7 +29,7 @@ function GlanceList({ moves, depth, fen, hover, onPreviewLine }: {
   depth: number
   fen: string
   hover: string
-  onPreviewLine?: (moves: string[]) => void
+  onPreviewLine?: (moves: string[], fen: string) => void
 }) {
   return (
     <div className="space-y-1">
@@ -38,7 +38,7 @@ function GlanceList({ moves, depth, fen, hover, onPreviewLine }: {
         return (
           <button
             key={t.uci}
-            onClick={() => t.pv && onPreviewLine?.(t.pv)}
+            onClick={() => t.pv && onPreviewLine?.(t.pv, fen)}
             title={`Melhor linha com ${t.san} na profundidade ${depth} — clique para ver no tabuleiro`}
             className={`w-full flex items-start gap-2 text-left rounded px-1 py-0.5 ${hover}`}
           >
@@ -64,7 +64,7 @@ function GlanceList({ moves, depth, fen, hover, onPreviewLine }: {
  * How hard and how critical the decision is for the side that has NOT moved yet in the
  * displayed position — what a player faces at the board. Never reveals the best move.
  */
-export default function ToMoveCard({ onPreviewLine }: { onPreviewLine?: (moves: string[]) => void }) {
+export default function ToMoveCard({ onPreviewLine }: { onPreviewLine?: (moves: string[], fen: string) => void }) {
   const { currentFen, livePosition, playerWhite, playerBlack, engine, mode, trainingReveal } = useGame()
   const [open, setOpen] = useState(false)
   const [trapsOpen, setTrapsOpen] = useState(false)
@@ -200,7 +200,7 @@ export default function ToMoveCard({ onPreviewLine }: { onPreviewLine?: (moves: 
                 return (
                   <button
                     key={l.multipv}
-                    onClick={() => onPreviewLine?.(l.pv)}
+                    onClick={() => onPreviewLine?.(l.pv, currentFen)}
                     title="Ver esta linha no tabuleiro"
                     className="w-full flex items-center gap-2 px-2 py-1.5 rounded border border-[#34435a] bg-[#1a2230] hover:bg-[#2a3648] text-left"
                   >

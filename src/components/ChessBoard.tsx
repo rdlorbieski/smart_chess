@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { numberedTokens } from '../lib/notation'
 import { playSound, soundForSan } from '../lib/sound'
 import { Chessground } from 'chessground'
 import type { Api } from 'chessground/api'
@@ -53,12 +54,42 @@ function CgPiece({ className }: { className: string }) {
   return <span ref={ref} className="contents" />
 }
 
+/** A line to play on the board (UCI moves from `fen`) without touching the game. */
+export interface PreviewLine {
+  fen: string
+  moves: string[]
+}
+
+interface PreviewStep {
+  fen: string
+  lastMove?: [Key, Key]
+  san?: string
+}
+
+/** Positions along a previewed line: the start, then one per legal move (stops at the first illegal one). */
+function previewSteps(line: PreviewLine): PreviewStep[] {
+  const chess = new Chess(line.fen)
+  const steps: PreviewStep[] = [{ fen: line.fen }]
+  for (const uci of line.moves) {
+    try {
+      const m = chess.move({ from: uci.slice(0, 2), to: uci.slice(2, 4), promotion: uci[4] })
+      steps.push({ fen: chess.fen(), lastMove: [m.from as Key, m.to as Key], san: m.san })
+    } catch {
+      break
+    }
+  }
+  return steps
+}
+
+const PREVIEW_FIRST_MS = 500
+const PREVIEW_STEP_MS = 1000
+
 interface Props {
-  previewMoves?: string[]
+  preview?: PreviewLine | null
   onClearPreview?: () => void
 }
 
-export default function ChessBoard({ previewMoves, onClearPreview }: Props) {
+export default function ChessBoard({ preview, onClearPreview }: Props) {
   const {
     currentFen, makeMove, orientation, moves, currentIndex, navigateBack, navigateForward,
     livePosition, showArrows, showTrapArrows, mode, trainingReveal,
@@ -144,9 +175,39 @@ export default function ChessBoard({ previewMoves, onClearPreview }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // Previewed line: played on the board one move per second, then held on the last position
+  // until the user leaves it (✕, Esc, or navigating). The game itself is never touched.
+  const steps = useMemo(() => (preview ? previewSteps(preview) : null), [preview])
+  const [step, setStep] = useState(0)
+  const [run, setRun] = useState(0) // bumped by "replay"
+  useEffect(() => setStep(0), [steps, run])
+  useEffect(() => {
+    if (!steps || step >= steps.length - 1) return
+    const t = setTimeout(() => {
+      const next = steps[step + 1]
+      if (next.san) playSound(soundForSan(next.san))
+      setStep(step + 1)
+    }, step === 0 ? PREVIEW_FIRST_MS : PREVIEW_STEP_MS)
+    return () => clearTimeout(t)
+  }, [steps, step])
+
   // Update position, orientation, last move
   useEffect(() => {
     if (!apiRef.current) return
+    if (steps) {
+      const s = steps[Math.min(step, steps.length - 1)]
+      const chess = new Chess(s.fen)
+      const color: CgColor = chess.turn() === 'w' ? 'white' : 'black'
+      apiRef.current.set({
+        fen: s.fen,
+        orientation,
+        turnColor: color,
+        lastMove: s.lastMove,
+        check: chess.isCheck() ? color : undefined,
+        movable: { color: undefined, dests: new Map() }, // read-only while previewing
+      })
+      return
+    }
     const chess = new Chess(currentFen)
     const color: CgColor = chess.turn() === 'w' ? 'white' : 'black'
     const dests = getLegalDests(currentFen)
@@ -164,19 +225,15 @@ export default function ChessBoard({ previewMoves, onClearPreview }: Props) {
       check: chess.isCheck() ? color : undefined,
       movable: { color, dests },
     })
-  }, [currentFen, orientation, currentIndex, moves])
+  }, [currentFen, orientation, currentIndex, moves, steps, step])
 
-  // Arrows: a previewed line wins; otherwise the engine's best candidates for the side to move.
-  // Hidden in Coach mode until the best move is revealed, and when switched off.
+  // Arrows: the engine's best candidates for the side to move (none while a line is being
+  // previewed). Hidden in Coach mode until the best move is revealed, and when switched off.
   useEffect(() => {
     if (!apiRef.current) return
     let shapes: DrawShape[] = []
-    if (previewMoves && previewMoves.length > 0) {
-      shapes = previewMoves.slice(0, 3).map((uci, i) => ({
-        orig: uci.slice(0, 2) as Key,
-        dest: uci.slice(2, 4) as Key,
-        brush: i === 0 ? 'blue' : 'green',
-      }))
+    if (steps) {
+      shapes = []
     } else if ((showArrows || showTrapArrows) && !(mode === 'training' && !trainingReveal) && livePosition?.fen === currentFen) {
       const turn = new Chess(currentFen).turn()
       const traps = livePosition.traps?.traps ?? []
@@ -206,7 +263,7 @@ export default function ChessBoard({ previewMoves, onClearPreview }: Props) {
       shapes = [...trapShapes, ...goodShapes]
     }
     apiRef.current.setAutoShapes(shapes)
-  }, [previewMoves, showArrows, showTrapArrows, mode, trainingReveal, livePosition, currentFen])
+  }, [steps, showArrows, showTrapArrows, mode, trainingReveal, livePosition, currentFen])
 
   // Keyboard navigation
   useEffect(() => {
@@ -219,21 +276,45 @@ export default function ChessBoard({ previewMoves, onClearPreview }: Props) {
     return () => window.removeEventListener('keydown', handler)
   }, [navigateBack, navigateForward, onClearPreview])
 
+  const tokens = preview && steps ? numberedTokens(steps.slice(1).map((s) => s.san!), preview.fen) : []
+  const playing = !!steps && step < steps.length - 1
+
   return (
     <div className="w-full flex flex-col gap-1">
-      {previewMoves && (
-        <div className="flex items-center gap-2 px-1 py-0.5">
-          <span className="text-[#8f9db3] text-xs">Visualizando linha do motor</span>
-          <button
-            onClick={onClearPreview}
-            className="text-[#81b64c] text-xs hover:underline"
-          >
-            ✕ Limpar
-          </button>
-        </div>
-      )}
       <div className="cg-board-wrapper relative">
         <div ref={cgRef} className="cg-wrap" />
+        {steps && (
+          // Sits over the top nameplate (just above the board), so no square is hidden.
+          <div className="absolute bottom-full mb-1 left-0 right-0 z-10 min-h-[40px] flex items-center gap-2 rounded-md bg-[#151c28] border border-[#34435a] px-2.5 py-1.5 shadow-lg">
+            <span className="shrink-0 text-[10px] uppercase tracking-wider font-semibold text-[#81b64c] pt-0.5">
+              {playing ? '▶ Linha' : 'Linha'}
+            </span>
+            <span className="flex-1 min-w-0 flex flex-wrap gap-x-1.5 gap-y-0.5 text-[12px] font-mono leading-snug">
+              {tokens.map((t, i) => (
+                <span
+                  key={i}
+                  className={i + 1 === step ? 'text-white font-bold bg-[#4a5b75] rounded px-1 -mx-1' : i + 1 < step ? 'text-[#d5dbe5]' : 'text-[#5f6d83]'}
+                >
+                  {t}
+                </span>
+              ))}
+            </span>
+            <button
+              onClick={() => setRun((r) => r + 1)}
+              className="shrink-0 text-[11px] text-[#a3afc2] hover:text-white px-1"
+              title="Repetir a linha"
+            >
+              ⟲
+            </button>
+            <button
+              onClick={onClearPreview}
+              className="shrink-0 text-[11px] text-[#a3afc2] hover:text-white px-1"
+              title="Voltar à posição da partida (Esc)"
+            >
+              ✕
+            </button>
+          </div>
+        )}
         {promo && (
           <div
             className="absolute inset-0 z-20 flex items-center justify-center bg-black/55 backdrop-blur-[1px]"

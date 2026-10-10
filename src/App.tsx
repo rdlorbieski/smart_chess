@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Chess } from 'chess.js'
 import { GameProvider, useGame } from './store/GameContext'
-import ChessBoard from './components/ChessBoard'
+import ChessBoard, { type PreviewLine } from './components/ChessBoard'
 import EvaluationBar from './components/EvaluationBar'
 import MoveList from './components/MoveList'
 import CriticalityTimeline from './components/CriticalityTimeline'
@@ -94,7 +94,12 @@ function GameSummary() {
 function AppInner() {
   const { liveEval, currentIndex, fens, moves, orientation, mode, meta,
           playerWhite, playerBlack, setPlayerName, clock } = useGame()
-  const [previewMoves, setPreviewMoves] = useState<string[] | null>(null)
+  const [preview, setPreview] = useState<PreviewLine | null>(null)
+  const showLine = useCallback((moves: string[], fen: string) => setPreview({ moves, fen }), [])
+  const clearLine = useCallback(() => setPreview(null), [])
+  // Leaving the position (navigating, playing a move, loading a game) ends the preview.
+  const viewedFen = fens[currentIndex] ?? fens[0]
+  useEffect(() => setPreview(null), [viewedFen])
   const [tab, setTab] = useState<Tab>('moves')
   const currentFenForMaterial = fens[currentIndex] ?? fens[0]
   const material = useMemo(() => materialFor(currentFenForMaterial), [currentFenForMaterial])
@@ -143,7 +148,7 @@ function AppInner() {
           <div className="flex gap-3 items-stretch" style={{ height: boardSize }}>
             <EvaluationBar score={liveEval} isAnalyzing={isAnalyzing} flipped={orientation === 'black'} />
             <div className="min-w-0 flex-1">
-              <ChessBoard previewMoves={previewMoves ?? undefined} onClearPreview={() => setPreviewMoves(null)} />
+              <ChessBoard preview={preview} onClearPreview={clearLine} />
             </div>
           </div>
           {nameplate('bottom')}
@@ -178,9 +183,9 @@ function AppInner() {
             <div className="flex-1 min-h-0 overflow-y-auto flex flex-col">
               {tab === 'moves' ? (
                 <>
-                  <EngineLines onPreviewLine={setPreviewMoves} />
+                  <EngineLines onPreviewLine={showLine} />
                   <div className="px-3 py-2.5 border-b border-[#2a3648]">
-                    <ToMoveCard onPreviewLine={setPreviewMoves} />
+                    <ToMoveCard onPreviewLine={showLine} />
                   </div>
                   <GameSummary />
                   <div className="px-3 py-1.5 min-h-[30px] flex items-center border-b border-[#2a3648]">
@@ -192,7 +197,7 @@ function AppInner() {
               ) : (
                 <div className="p-3">
                   {tab === 'analysis' ? (
-                    <AnalysisPanel onPreviewLine={setPreviewMoves} />
+                    <AnalysisPanel onPreviewLine={showLine} />
                   ) : tab === 'explorer' ? (
                     <ExplorerPanel />
                   ) : (

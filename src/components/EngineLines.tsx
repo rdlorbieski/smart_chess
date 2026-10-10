@@ -8,7 +8,7 @@ import { numberedLine } from '../lib/notation'
  * chess.com-style engine strip: on/off switch, depth and engine name, then the top three
  * lines with their evaluation in a white (White better) or dark (Black better) box.
  */
-export default function EngineLines({ onPreviewLine }: { onPreviewLine?: (moves: string[]) => void }) {
+export default function EngineLines({ onPreviewLine }: { onPreviewLine?: (moves: string[], fen: string) => void }) {
   const {
     currentFen, livePosition, engineReady, analysisPaused, stopAnalysis, resumeAnalysis, liveDepth,
     backend, serverEngine, mode, trainingReveal,
@@ -66,7 +66,7 @@ export default function EngineLines({ onPreviewLine }: { onPreviewLine?: (moves:
             return (
               <button
                 key={l.multipv}
-                onClick={() => onPreviewLine?.(l.pv)}
+                onClick={() => onPreviewLine?.(l.pv, currentFen)}
                 title="Ver esta linha no tabuleiro"
                 className="w-full flex items-center gap-2 px-3 py-[3px] text-left hover:bg-[#2a3648]"
               >

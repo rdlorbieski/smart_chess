@@ -8,7 +8,7 @@ import { moveNumberLabel, numberedTokens } from '../lib/notation'
 interface Props {
   lines: EngineLineResult[]
   fen: string
-  onPreviewLine?: (moves: string[]) => void
+  onPreviewLine?: (moves: string[], fen: string) => void
 }
 
 export default function TopLines({ lines, fen, onPreviewLine }: Props) {
@@ -48,7 +48,7 @@ export default function TopLines({ lines, fen, onPreviewLine }: Props) {
             `}
             onMouseEnter={() => setHovered(i)}
             onMouseLeave={() => setHovered(null)}
-            onClick={() => onPreviewLine?.(line.pv)}
+            onClick={() => onPreviewLine?.(line.pv, fen)}
           >
             <div className="flex items-center justify-between mb-1.5">
               <div className="flex items-center gap-2">

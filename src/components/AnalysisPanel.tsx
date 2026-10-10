@@ -137,7 +137,7 @@ function SectionDivider({ label, detail, dot }: { label: string; detail?: string
 }
 
 interface Props {
-  onPreviewLine?: (moves: string[]) => void
+  onPreviewLine?: (moves: string[], fen: string) => void
 }
 
 export default function AnalysisPanel({ onPreviewLine }: Props) {
