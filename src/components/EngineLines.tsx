@@ -2,21 +2,7 @@ import { useState } from 'react'
 import { useGame } from '../store/GameContext'
 import { evalToNumber, formatEval } from '../engine/ChessEngine'
 import EngineSettings, { ThresholdControl } from './EngineSettings'
-
-/** "14.Rb1 b4 15.Nb5 …" — SAN with move numbers, starting from `fen`. */
-function numbered(sans: string[], fen: string, max: number) {
-  const [, turn, , , , full] = fen.split(' ')
-  let n = Number(full) || 1
-  let white = turn === 'w'
-  const out: string[] = []
-  sans.slice(0, max).forEach((san, i) => {
-    if (white) out.push(`${n}.${san}`)
-    else out.push(i === 0 ? `${n}…${san}` : san)
-    if (!white) n++
-    white = !white
-  })
-  return out.join(' ') + (sans.length > max ? ' …' : '')
-}
+import { numberedLine } from '../lib/notation'
 
 /**
  * chess.com-style engine strip: on/off switch, depth and engine name, then the top three
@@ -91,7 +77,7 @@ export default function EngineLines({ onPreviewLine }: { onPreviewLine?: (moves:
                 >
                   {formatEval(l.scoreWhitePerspective)}
                 </span>
-                <span className="truncate text-[12px] text-[#d5dbe5]">{numbered(l.san ?? l.pv, currentFen, 10)}</span>
+                <span className="truncate text-[12px] text-[#d5dbe5]">{numberedLine(l.san ?? l.pv, currentFen, 10)}</span>
               </button>
             )
           })

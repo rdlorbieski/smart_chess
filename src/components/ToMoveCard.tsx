@@ -3,6 +3,7 @@ import { Chess } from 'chess.js'
 import { useGame } from '../store/GameContext'
 import { criticalityTier, formatEval } from '../engine/ChessEngine'
 import { wpFor } from '../engine/metrics'
+import { moveNumberLabel, numberedTokens } from '../lib/notation'
 
 function Bar({ label, value, color }: { label: string; value: number; color: string }) {
   const pct = Math.round(value * 100)
@@ -145,9 +146,11 @@ export default function ToMoveCard({ onPreviewLine }: { onPreviewLine?: (moves: 
                     title="Ver esta linha no tabuleiro"
                     className="w-full flex items-center gap-2 px-2 py-1.5 rounded border border-[#34435a] bg-[#1a2230] hover:bg-[#2a3648] text-left"
                   >
-                    <span className="text-[#8f9db3] text-[10px] font-mono w-3">{i + 1}.</span>
-                    <span className="text-[#f1f4f8] text-sm font-mono font-semibold">{l.san?.[0] ?? l.pv[0]}</span>
-                    <span className="text-[#8f9db3] text-[11px] font-mono truncate flex-1">{l.san?.slice(1, 4).join(' ')}</span>
+                    <span className="text-[#8f9db3] text-[11px] font-mono shrink-0">{moveNumberLabel(currentFen)}</span>
+                    <span className="text-[#f1f4f8] text-sm font-mono font-semibold -ml-1.5">{l.san?.[0] ?? l.pv[0]}</span>
+                    <span className="text-[#8f9db3] text-[11px] font-mono truncate flex-1">
+                      {numberedTokens((l.san ?? l.pv).slice(0, 4), currentFen).slice(1).join(' ')}
+                    </span>
                     <span className="text-[#f1f4f8] text-xs font-mono">{formatEval(l.scoreWhitePerspective)}</span>
                     <span className="text-[#8f9db3] text-[10px] font-mono w-8 text-right">{i === 0 ? 'melhor' : `−${drop}%`}</span>
                   </button>

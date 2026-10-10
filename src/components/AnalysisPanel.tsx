@@ -6,6 +6,8 @@ import { wpFor, evalToPawns } from '../engine/metrics'
 import TopLines from './TopLines'
 import EngineSettings, { ThresholdControl } from './EngineSettings'
 import ToMoveCard from './ToMoveCard'
+import { Chess } from 'chess.js'
+import { moveNumberLabel } from '../lib/notation'
 
 const CLASS_META: Record<MoveClassification, { label: string; color: string; bg: string; symbol: string }> = {
   brilliant: { label: 'Brilhante', color: '#0ea5e9', bg: '#0ea5e920', symbol: '!!' },
@@ -122,6 +124,18 @@ function LinesChart({ lines, color }: { lines: EngineLineResult[]; color: 'w' | 
   )
 }
 
+/** Labelled rule splitting the panel into "now" (the decision ahead) and "past" (the move played). */
+function SectionDivider({ label, detail, dot }: { label: string; detail?: string; dot?: string }) {
+  return (
+    <div className="flex items-center gap-2 pt-1">
+      {dot && <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: dot }} />}
+      <span className="text-[10px] uppercase tracking-wider font-semibold text-[#a3afc2] shrink-0">{label}</span>
+      {detail && <span className="text-[11px] text-[#8f9db3] shrink-0">{detail}</span>}
+      <div className="flex-1 h-px bg-[#34435a]" />
+    </div>
+  )
+}
+
 interface Props {
   onPreviewLine?: (moves: string[]) => void
 }
@@ -129,7 +143,7 @@ interface Props {
 export default function AnalysisPanel({ onPreviewLine }: Props) {
   const {
     moves, currentIndex, mode, liveEval, engineReady, trainingReveal, revealTraining,
-    retryMove, livePosition,
+    retryMove, livePosition, currentFen,
   } = useGame()
   const [showLines, setShowLines] = useState(false)
 
@@ -151,11 +165,22 @@ export default function AnalysisPanel({ onPreviewLine }: Props) {
 
   const hideBest = mode === 'training' && !trainingReveal
 
+  const now = new Chess(currentFen).isGameOver() ? null : (
+    <>
+      <SectionDivider label="Agora" detail={`${moveNumberLabel(currentFen)} decisão a tomar`} dot="#81b64c" />
+      <ToMoveCard onPreviewLine={onPreviewLine} />
+    </>
+  )
+  const past = move && (
+    <SectionDivider label="Lance jogado" detail={`${move.moveNumber}${move.color === 'w' ? '.' : '…'} ${move.san}`} dot="#5f6d83" />
+  )
+  const settings = <SectionDivider label="Configurações" />
+
   // Start position or no move selected
   if (!move) {
     return (
       <div className="space-y-4">
-        <ToMoveCard onPreviewLine={onPreviewLine} />
+        {now}
         <div className="rounded-lg border border-[#34435a] bg-[#212b3a] p-4">
           <div className="text-[#8f9db3] text-xs uppercase tracking-wider mb-2">Avaliação ao vivo</div>
           <div className="text-2xl font-mono font-bold text-[#f1f4f8]">
@@ -165,8 +190,9 @@ export default function AnalysisPanel({ onPreviewLine }: Props) {
         <div className="text-center text-[#8f9db3] text-sm py-2">
           Jogue um lance ou navegue até um para ver a análise
         </div>
+        {settings}
         <ThresholdControl />
-      <EngineSettings />
+        <EngineSettings />
       </div>
     )
   }
@@ -179,7 +205,8 @@ export default function AnalysisPanel({ onPreviewLine }: Props) {
     const lost = move.evalLoss
     return (
       <div className="space-y-4">
-        <ToMoveCard onPreviewLine={onPreviewLine} />
+        {now}
+        {past}
         <div className="rounded-lg border border-[#34435a] bg-[#212b3a] p-4">
           <div className="text-[#8f9db3] text-xs uppercase tracking-wider mb-2">Seu lance</div>
           <div className="text-xl font-mono font-semibold text-[#f1f4f8]">{move.san}</div>
@@ -228,7 +255,8 @@ export default function AnalysisPanel({ onPreviewLine }: Props) {
 
   return (
     <div className="space-y-3">
-      <ToMoveCard onPreviewLine={onPreviewLine} />
+      {now}
+      {past}
       {/* Move header */}
       <div
         className="rounded-lg border p-3"
@@ -330,6 +358,7 @@ export default function AnalysisPanel({ onPreviewLine }: Props) {
         </>
       )}
 
+      {settings}
       <ThresholdControl />
       <EngineSettings />
     </div>

@@ -3,6 +3,7 @@ import type { EngineLineResult } from '../types'
 import { Chess } from 'chess.js'
 import { evalToNumber, formatEval } from '../engine/ChessEngine'
 import { wpFor } from '../engine/metrics'
+import { moveNumberLabel, numberedTokens } from '../lib/notation'
 
 interface Props {
   lines: EngineLineResult[]
@@ -51,14 +52,14 @@ export default function TopLines({ lines, fen, onPreviewLine }: Props) {
           >
             <div className="flex items-center justify-between mb-1.5">
               <div className="flex items-center gap-2">
-                <span className="text-[#8f9db3] text-xs font-mono">{i + 1}.</span>
+                <span className="text-[#8f9db3] text-xs font-mono">{moveNumberLabel(fen)}</span>
                 <span className="text-[#f1f4f8] text-sm font-mono font-semibold">
                   {line.san?.[0] ?? line.pv[0]}
                 </span>
                 {line.san && line.san.length > 1 && (
-                  <span className="text-[#8f9db3] text-xs font-mono truncate max-w-[120px]">
-                    {line.san.slice(1, 5).join(' ')}
-                    {line.san.length > 5 ? '...' : ''}
+                  <span className="text-[#8f9db3] text-xs font-mono truncate max-w-[160px]">
+                    {numberedTokens(line.san.slice(0, 5), fen).slice(1).join(' ')}
+                    {line.san.length > 5 ? ' …' : ''}
                   </span>
                 )}
               </div>
