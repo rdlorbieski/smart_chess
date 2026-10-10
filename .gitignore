@@ -20,7 +20,7 @@ logs/
 /.plugins/
 /.opencode-skills/
 
-data/
+/data/
 stockfish/
 stockfish-*.zip
 stockfish-linux/
