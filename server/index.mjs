@@ -3,6 +3,7 @@ import os from 'node:os'
 import { resolveEngine, validateRequest, EnginePool } from './engine.mjs'
 import { saveGame, listGames, getGame, deleteGame, explore, importPgn, databaseStats, clearImported } from './db.mjs'
 import { masters, masterGamePgn, getToken, tokenSource, saveToken, deleteToken, LichessError } from './lichess.mjs'
+import { authEnabled, handleAuth, isAuthorized } from './auth.mjs'
 
 const PORT = Number(process.env.SERVER_PORT ?? 3001)
 // Local tool: never expose the engine or the database to the network. The Docker
@@ -61,6 +62,10 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'GET' && url.pathname === '/api/health') {
       return send(res, 200, { ok: true, engine: engine?.kind ?? null })
     }
+
+    if (await handleAuth(req, res, url, { send, readJson })) return
+    // Everything below needs a session when AUTH_PASSWORD is set.
+    if (!isAuthorized(req)) return send(res, 401, { error: 'unauthorized' })
 
     if (req.method === 'POST' && url.pathname === '/api/analyze') {
       if (!pool) return send(res, 503, { error: 'engine unavailable' })
@@ -166,5 +171,5 @@ const server = http.createServer(async (req, res) => {
 })
 
 server.listen(PORT, HOST, () =>
-  console.log(`[server] http://${HOST}:${PORT} engine=${engine?.kind ?? 'none'} pool=${pool ? POOL_SIZE : 0}`),
+  console.log(`[server] http://${HOST}:${PORT} engine=${engine?.kind ?? 'none'} pool=${pool ? POOL_SIZE : 0} auth=${authEnabled ? 'on' : 'off'}`),
 )

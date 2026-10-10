@@ -10,6 +10,14 @@ services:
     environment:
       - ENGINE_POOL=${ENGINE_POOL:-}
       - LICHESS_TOKEN=${LICHESS_TOKEN:-}
+      # Login (sem AUTH_PASSWORD a API fica aberta) e recuperação por e-mail
+      - AUTH_USER=${AUTH_USER:-}
+      - AUTH_PASSWORD=${AUTH_PASSWORD:-}
+      - RECOVERY_EMAIL=${RECOVERY_EMAIL:-}
+      - SMTP_HOST=${SMTP_HOST:-}
+      - SMTP_PORT=${SMTP_PORT:-}
+      - SMTP_USER=${SMTP_USER:-}
+      - SMTP_PASS=${SMTP_PASS:-}
     volumes:
       - smart-chess-data:/app/data
 

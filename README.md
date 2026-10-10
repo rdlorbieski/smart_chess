@@ -96,6 +96,11 @@ A ordem de escolha é: `STOCKFISH_PATH` → binário em `stockfish/` (Windows) o
 | `LICHESS_TOKEN` | — | Token pessoal do Lichess (alternativa a colá-lo no Explorer) |
 | `SERVER_HOST` | `127.0.0.1` | Endereço em que a API escuta (o Docker usa `0.0.0.0`) |
 | `ENGINE_POOL` | núcleos − 2 (máx. 6) | Quantos processos do Stockfish o servidor mantém abertos para analisar em paralelo |
+| `AUTH_USER` | `admin` | Usuário do login |
+| `AUTH_PASSWORD` | — | Senha do login. Vazio = sem login (uso local) |
+| `RECOVERY_EMAIL` | — | E-mail que recebe o código de acesso do "Esqueci a senha" |
+| `SMTP_HOST` / `SMTP_PORT` | `smtp.gmail.com` / `465` | Servidor de envio do e-mail |
+| `SMTP_USER` / `SMTP_PASS` | — | Conta que envia e a senha de app dela (Gmail: myaccount.google.com/apppasswords) |
 
 Se mudar `SERVER_PORT`, use o mesmo valor ao subir o `pnpm dev`.
 
@@ -113,6 +118,14 @@ docker compose --profile local up -d --build
 # Na VPS: git pull + build + up do perfil prod
 ./deploy.sh
 ```
+
+### Login
+
+Com `AUTH_PASSWORD` definido, o site pede usuário e senha (`AUTH_USER` / `AUTH_PASSWORD`) e toda a API, exceto `/api/health` e `/api/auth/*`, responde 401 sem sessão. A sessão é um cookie assinado que dura 30 dias (a chave fica em `data/session-secret`, no volume); trocar a senha derruba as sessões abertas. Depois de 10 tentativas erradas, o IP espera 15 minutos.
+
+**Esqueci a senha:** com `RECOVERY_EMAIL` e `SMTP_USER`/`SMTP_PASS` preenchidos, a tela de login mostra um link que envia um código de 6 dígitos (vale 10 minutos, uso único) para o e-mail; o código entra direto no app. A senha em si continua sendo a do `.env`.
+
+Sem `AUTH_PASSWORD` (como no `pnpm dev`), não há login.
 
 Configuração opcional: `.env` ao lado do `docker-compose.yml` (modelo em `.env.example`) com `ENGINE_POOL` (processos do Stockfish) e `LICHESS_TOKEN`. O `.env` não vai para o git, então crie-o também na VPS (`cp .env.example .env`).
 
@@ -165,7 +178,8 @@ O servidor escuta apenas em `127.0.0.1` (no Docker, `SERVER_HOST=0.0.0.0`, mas a
 ## Estrutura
 
 ```
-server/            API Node (sem dependências): motor + SQLite
+server/            API Node: motor + SQLite
+  auth.mjs         login, sessão e código de recuperação por e-mail
   index.mjs        rotas HTTP
   engine.mjs       processo do Stockfish (nativo ou WASM no Node)
   db.mjs           esquema e consultas SQLite

@@ -11,6 +11,7 @@ import PlayerNameplate from './components/PlayerNameplate'
 import OpeningBadge from './components/OpeningBadge'
 import ExplorerPanel from './components/ExplorerPanel'
 import GameReport from './components/GameReport'
+import LoginGate, { useAuth } from './components/LoginGate'
 import { capturedGlyphs, materialFor } from './lib/material'
 
 /**
@@ -38,6 +39,7 @@ function useBoardSize() {
 function AppInner() {
   const { liveEval, engineReady, currentIndex, fens, moves, orientation,
           playerWhite, playerBlack, setPlayerName, clock } = useGame()
+  const auth = useAuth()
   const [previewMoves, setPreviewMoves] = useState<string[] | null>(null)
   const [tab, setTab] = useState<'analysis' | 'explorer' | 'report'>('analysis')
   const currentFenForMaterial = fens[currentIndex] ?? fens[0]
@@ -79,6 +81,16 @@ function AppInner() {
             {engineReady ? 'Stockfish' : 'Carregando motor…'}
           </span>
         </div>
+
+        {auth.user && (
+          <button
+            onClick={auth.logout}
+            title={`Sair (${auth.user})`}
+            className="ml-2 px-2 py-0.5 rounded text-xs text-[#7d8590] border border-[#30363d] hover:text-[#e6edf3] hover:border-[#484f58]"
+          >
+            Sair
+          </button>
+        )}
       </header>
 
       {/* Main grid */}
@@ -199,8 +211,10 @@ function AppInner() {
 
 export default function App() {
   return (
-    <GameProvider>
-      <AppInner />
-    </GameProvider>
+    <LoginGate>
+      <GameProvider>
+        <AppInner />
+      </GameProvider>
+    </LoginGate>
   )
 }
