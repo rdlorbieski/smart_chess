@@ -203,8 +203,16 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   }, [engineReady])
 
   // Detect the optional backend server; if it fails mid-session, fall back to the in-browser engine.
+  // A native Stockfish on the server is much faster than the browser one, so it becomes the default.
   useEffect(() => {
-    serverHealth().then((h) => setServerEngine(h?.ok ? (h.engine ?? null) : null))
+    serverHealth().then((h) => {
+      setServerEngine(h?.ok ? (h.engine ?? null) : null)
+      if (h?.ok && h.engine === 'native') {
+        engine.setBackend('server')
+        setBackendState('server')
+        setRebuildTick((t) => t + 1)
+      }
+    })
     engine.onServerError = () => {
       engine.setBackend('local')
       setBackendState('local')
