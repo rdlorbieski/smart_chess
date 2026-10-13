@@ -22,6 +22,8 @@ function DatabaseImport() {
   const [count, setCount] = useState<number | null>(null)
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null)
+  const [showPaste, setShowPaste] = useState(false)
+  const [pgnText, setPgnText] = useState('')
 
   const refresh = () =>
     databaseStats()
@@ -31,26 +33,40 @@ function DatabaseImport() {
     refresh()
   }, [])
 
-  const onFiles = async (files: FileList | null) => {
-    if (!files?.length) return
+  const importTexts = async (texts: Promise<string>[]) => {
+    if (!texts.length) return false
     setBusy(true)
     setMsg(null)
     let imported = 0
     let duplicates = 0
     let skipped = 0
     try {
-      for (const f of Array.from(files)) {
-        const r = await importPgnDatabase(await f.text())
+      for (const text of texts) {
+        const r = await importPgnDatabase(await text)
         imported += r.imported
         duplicates += r.duplicates
         skipped += r.skipped
       }
       setMsg({ ok: true, text: `${imported} partidas importadas (${duplicates} duplicadas, ${skipped} ilegíveis ignoradas).` })
+      return true
     } catch (e) {
       setMsg({ ok: false, text: e instanceof Error ? e.message : 'A importação falhou' })
+      return false
     } finally {
       setBusy(false)
       refresh()
+    }
+  }
+
+  const onFiles = (files: FileList | null) => {
+    if (files?.length) void importTexts(Array.from(files, (file) => file.text()))
+  }
+
+  const onPaste = async () => {
+    if (!pgnText.trim()) return
+    if (await importTexts([Promise.resolve(pgnText)])) {
+      setPgnText('')
+      setShowPaste(false)
     }
   }
 
@@ -69,6 +85,14 @@ function DatabaseImport() {
           <span className="text-[#f1f4f8] font-semibold">Base de mestres</span> · {count.toLocaleString('pt-BR')} partidas importadas
         </div>
         <div className="flex gap-1.5 shrink-0">
+          <button
+            type="button"
+            onClick={() => setShowPaste((value) => !value)}
+            disabled={busy}
+            className="px-2.5 py-1 rounded text-xs border border-[#34435a] text-[#a3afc2] hover:text-[#f1f4f8] disabled:opacity-50"
+          >
+            Colar PGN
+          </button>
           <label className={`px-2.5 py-1 rounded text-xs cursor-pointer ${busy ? 'opacity-50 pointer-events-none' : 'bg-[#81b64c] text-white hover:bg-[#95c95f]'}`}>
             {busy ? 'Importando…' : 'Importar PGN…'}
             <input type="file" accept=".pgn,application/x-chess-pgn,text/plain" multiple className="hidden" onChange={(e) => onFiles(e.target.files)} />
@@ -84,6 +108,36 @@ function DatabaseImport() {
         Fontes gratuitas: TWIC (theweekinchess.com, partidas de elite toda semana) ou a Lichess Elite Database. As partidas
         importadas alimentam a seção "Base importada" do Explorador e ficam fora desta lista.
       </p>
+      {showPaste && (
+        <div className="space-y-2">
+          <label htmlFor="pgn-paste" className="text-xs text-[#a3afc2]">Cole o texto PGN abaixo</label>
+          <textarea
+            id="pgn-paste"
+            className={`${input} h-32 resize-y`}
+            value={pgnText}
+            onChange={(e) => setPgnText(e.target.value)}
+            placeholder={'[Event "Partida"]\n\n1. e4 e5 *'}
+          />
+          <div className="flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => { setShowPaste(false); setPgnText('') }}
+              disabled={busy}
+              className="px-2.5 py-1 rounded text-xs border border-[#34435a] text-[#8f9db3] hover:text-[#f1f4f8] disabled:opacity-50"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={onPaste}
+              disabled={busy || !pgnText.trim()}
+              className="px-2.5 py-1 rounded text-xs bg-[#81b64c] text-white hover:bg-[#95c95f] disabled:opacity-50"
+            >
+              {busy ? 'Importando…' : 'Importar texto'}
+            </button>
+          </div>
+        </div>
+      )}
       {msg && <p className={`text-xs ${msg.ok ? 'text-green-400' : 'text-red-400'}`}>{msg.text}</p>}
     </div>
   )
