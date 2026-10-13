@@ -1,7 +1,7 @@
 import http from 'node:http'
 import os from 'node:os'
 import { resolveEngine, validateRequest, EnginePool } from './engine.mjs'
-import { saveGame, listGames, getGame, deleteGame, explore, importPgn, databaseStats, clearImported } from './db.mjs'
+import { saveGame, updateGame, listGames, getGame, deleteGame, explore, importPgn, databaseStats, clearImported } from './db.mjs'
 import { masters, masterGamePgn, getToken, tokenSource, saveToken, deleteToken, LichessError } from './lichess.mjs'
 import { authEnabled, handleAuth, isAuthorized } from './auth.mjs'
 
@@ -163,6 +163,9 @@ const server = http.createServer(async (req, res) => {
     }
     if (m && req.method === 'DELETE') {
       return deleteGame(Number(m[1])) ? send(res, 200, { ok: true }) : send(res, 404, { error: 'not found' })
+    }
+    if (m && req.method === 'PUT') {
+      return updateGame(Number(m[1]), await readJson(req)) ? send(res, 200, { ok: true }) : send(res, 404, { error: 'not found' })
     }
     send(res, 404, { error: 'not found' })
   } catch (e) {
