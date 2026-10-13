@@ -12,6 +12,7 @@ export interface SavedGameSummary {
   has_pgn: number
   eco: string
   opening: string
+  video_url: string | null
 }
 
 export interface SavedGame extends SavedGameSummary {
@@ -32,6 +33,7 @@ export interface NewGame {
   stars: number
   eco?: string
   opening?: string
+  video_url?: string
 }
 
 async function json<T>(res: Response): Promise<T> {
@@ -62,6 +64,13 @@ export const saveGame = (g: NewGame) =>
 
 export const deleteGame = (id: number) =>
   fetch(`/api/games/${id}`, { method: 'DELETE' }).then((r) => json<{ ok: boolean }>(r))
+
+export const updateGame = (id: number, game: Partial<NewGame>) =>
+  fetch(`/api/games/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(game),
+  }).then((r) => json<{ ok: boolean }>(r))
 
 export interface ExplorerResult {
   moves: { san: string; count: number; white: number; draws: number; black: number }[]

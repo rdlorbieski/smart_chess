@@ -41,6 +41,7 @@ if (!cols.includes('source')) db.exec("ALTER TABLE games ADD COLUMN source TEXT 
 if (!cols.includes('white_elo')) db.exec('ALTER TABLE games ADD COLUMN white_elo INTEGER')
 if (!cols.includes('black_elo')) db.exec('ALTER TABLE games ADD COLUMN black_elo INTEGER')
 if (!cols.includes('hash')) db.exec('ALTER TABLE games ADD COLUMN hash TEXT')
+if (!cols.includes('video_url')) db.exec('ALTER TABLE games ADD COLUMN video_url TEXT')
 db.exec('CREATE INDEX IF NOT EXISTS idx_games_source ON games(source)')
 db.exec('CREATE INDEX IF NOT EXISTS idx_games_hash ON games(hash)')
 
@@ -103,6 +104,20 @@ for (const g of db
 
 const text = (v, max) => String(v ?? '').trim().slice(0, max)
 
+function videoUrl(v) {
+  const value = String(v ?? '').trim()
+  if (!value) return null
+  if (value.length > 2000) throw new Error('invalid video URL')
+  let parsed
+  try {
+    parsed = new URL(value)
+  } catch {
+    throw new Error('invalid video URL')
+  }
+  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') throw new Error('invalid video URL')
+  return value
+}
+
 export function saveGame(input) {
   const pgn = text(input.pgn, 200_000) || null
   const fen = text(input.fen, 200) || null
@@ -111,8 +126,8 @@ export function saveGame(input) {
   const stars = Math.min(5, Math.max(0, Math.round(Number(input.stars) || 0)))
   const info = db
     .prepare(
-      `INSERT INTO games (white, black, event, site, game_date, result, pgn, fen, notes, stars, eco, opening)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO games (white, black, event, site, game_date, result, pgn, fen, notes, stars, eco, opening, video_url)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
     .run(
       text(input.white, 100) || 'White',
@@ -127,10 +142,32 @@ export function saveGame(input) {
       stars,
       text(input.eco, 10),
       text(input.opening, 200),
+      videoUrl(input.video_url),
     )
   const id = Number(info.lastInsertRowid)
   if (pgn) indexGame(id, pgn)
   return id
+}
+
+export function updateGame(id, input) {
+  const existing = db.prepare("SELECT * FROM games WHERE id = ? AND source = 'user'").get(id)
+  if (!existing) return false
+  db.prepare(
+    `UPDATE games
+        SET white = ?, black = ?, event = ?, site = ?, game_date = ?, notes = ?, stars = ?, video_url = ?
+      WHERE id = ? AND source = 'user'`,
+  ).run(
+    text(input.white ?? existing.white, 100) || 'White',
+    text(input.black ?? existing.black, 100) || 'Black',
+    text(input.event ?? existing.event, 200),
+    text(input.site ?? existing.site, 200),
+    text(input.date ?? existing.game_date, 20),
+    text(input.notes ?? existing.notes, 5000),
+    input.stars == null ? existing.stars : Math.min(5, Math.max(0, Math.round(Number(input.stars) || 0))),
+    input.video_url === undefined ? existing.video_url : videoUrl(input.video_url),
+    id,
+  )
+  return true
 }
 
 const RESULTS = ['1-0', '0-1', '1/2-1/2', '*']
@@ -210,7 +247,7 @@ export function listGames(q = '') {
   const like = `%${text(q, 100).replace(/[\\%_]/g, '\\$&')}%`
   return db
     .prepare(
-      `SELECT id, white, black, event, site, game_date, result, stars, notes, created_at, eco, opening,
+      `SELECT id, white, black, event, site, game_date, result, stars, notes, created_at, eco, opening, video_url,
               pgn IS NOT NULL AS has_pgn
          FROM games
         WHERE source = 'user'

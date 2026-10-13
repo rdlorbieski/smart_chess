@@ -9,6 +9,8 @@ import {
   importPgnDatabase,
   listGames,
   saveGame,
+  updateGame,
+  type SavedGame,
   type SavedGameSummary,
 } from '../api/games'
 
@@ -134,6 +136,7 @@ export function SaveGameModal({ onClose }: { onClose: () => void }) {
   const [white, setWhite] = useState(playerWhite)
   const [black, setBlack] = useState(playerBlack)
   const [notes, setNotes] = useState('')
+  const [videoUrl, setVideoUrl] = useState('')
   const [stars, setStars] = useState(0)
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null)
@@ -148,7 +151,7 @@ export function SaveGameModal({ onClose }: { onClose: () => void }) {
       setPlayerName('black', black)
       await loadOpenings()
       const op = findOpening(fens, fens.length - 1)
-      const base = { white, black, event, site, date: meta.date, notes, stars, eco: op?.eco, opening: op?.name }
+      const base = { white, black, event, site, date: meta.date, notes, stars, video_url: videoUrl, eco: op?.eco, opening: op?.name }
       if (hasMoves) {
         // Build with the edited names so the stored PGN headers match the form.
         const { pgn, result } = getPgnWith(white, black, event, site)
@@ -207,6 +210,10 @@ export function SaveGameModal({ onClose }: { onClose: () => void }) {
             <label className={labelCls}>Notas</label>
             <textarea className={`${input} h-16 resize-none`} value={notes} onChange={(e) => setNotes(e.target.value)} maxLength={5000} />
           </div>
+          <div>
+            <label className={labelCls}>Link do vídeo</label>
+            <input className={input} type="url" value={videoUrl} onChange={(e) => setVideoUrl(e.target.value)} maxLength={2000} placeholder="https://…" />
+          </div>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className={labelCls + ' !mb-0'}>Avaliação</span>
@@ -235,11 +242,88 @@ export function SaveGameModal({ onClose }: { onClose: () => void }) {
   )
 }
 
+function EditSavedGameModal({ game, onClose, onSave }: { game: SavedGame; onClose: () => void; onSave: () => void }) {
+  const [white, setWhite] = useState(game.white)
+  const [black, setBlack] = useState(game.black)
+  const [event, setEvent] = useState(game.event)
+  const [site, setSite] = useState(game.site)
+  const [date, setDate] = useState(game.game_date)
+  const [notes, setNotes] = useState(game.notes)
+  const [videoUrl, setVideoUrl] = useState(game.video_url ?? '')
+  const [stars, setStars] = useState(game.stars)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const save = async () => {
+    setBusy(true)
+    setError(null)
+    try {
+      await updateGame(game.id, { white, black, event, site, date, notes, stars, video_url: videoUrl })
+      onSave()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Não foi possível atualizar')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <Modal title="Editar partida salva" onClose={onClose}>
+      <div className="space-y-3">
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className={labelCls}>Brancas</label>
+            <input className={input} value={white} onChange={(e) => setWhite(e.target.value)} maxLength={100} />
+          </div>
+          <div>
+            <label className={labelCls}>Pretas</label>
+            <input className={input} value={black} onChange={(e) => setBlack(e.target.value)} maxLength={100} />
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className={labelCls}>Torneio / evento</label>
+            <input className={input} value={event} onChange={(e) => setEvent(e.target.value)} maxLength={200} />
+          </div>
+          <div>
+            <label className={labelCls}>Local</label>
+            <input className={input} value={site} onChange={(e) => setSite(e.target.value)} maxLength={200} />
+          </div>
+        </div>
+        <div>
+          <label className={labelCls}>Data</label>
+          <input className={input} value={date} onChange={(e) => setDate(e.target.value)} maxLength={20} />
+        </div>
+        <div>
+          <label className={labelCls}>Notas</label>
+          <textarea className={`${input} h-16 resize-none`} value={notes} onChange={(e) => setNotes(e.target.value)} maxLength={5000} />
+        </div>
+        <div>
+          <label className={labelCls}>Link do vídeo</label>
+          <input className={input} type="url" value={videoUrl} onChange={(e) => setVideoUrl(e.target.value)} maxLength={2000} placeholder="https://…" />
+        </div>
+        <div className="flex items-center gap-2">
+          <span className={labelCls + ' !mb-0'}>Avaliação</span>
+          <Stars value={stars} onChange={setStars} />
+        </div>
+        {error && <p className="text-sm text-red-400">{error}</p>}
+        <div className="flex justify-end gap-2">
+          <button onClick={onClose} className="px-4 py-2 rounded-lg border border-[#34435a] text-[#8f9db3] text-sm hover:bg-[#2a3648]">Cancelar</button>
+          <button onClick={save} disabled={busy} className="px-4 py-2 rounded-lg bg-[#81b64c] text-white text-sm font-medium hover:bg-[#95c95f] disabled:opacity-40">
+            Salvar alterações
+          </button>
+        </div>
+      </div>
+    </Modal>
+  )
+}
+
 export function LibraryModal({ onClose }: { onClose: () => void }) {
   const { loadPGN, loadFEN, setPlayerName, setMeta } = useGame()
   const [q, setQ] = useState('')
   const [rows, setRows] = useState<SavedGameSummary[] | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [editing, setEditing] = useState<SavedGame | null>(null)
 
   const refresh = useCallback(() => {
     listGames(q)
@@ -270,6 +354,7 @@ export function LibraryModal({ onClose }: { onClose: () => void }) {
 
   return (
     <Modal title="Partidas salvas" onClose={onClose}>
+      {editing && <EditSavedGameModal game={editing} onClose={() => setEditing(null)} onSave={() => { setEditing(null); refresh() }} />}
       <DatabaseImport />
       <input className={`${input} mb-3`} placeholder="Buscar jogadores, torneio, abertura, notas…" value={q} onChange={(e) => setQ(e.target.value)} />
       {error && <p className="text-sm text-red-400">{error}</p>}
@@ -287,6 +372,18 @@ export function LibraryModal({ onClose }: { onClose: () => void }) {
               </div>
             </button>
             <Stars value={g.stars} />
+            {g.video_url && (
+              <a href={g.video_url} target="_blank" rel="noopener noreferrer" className="text-[#81b64c] hover:text-[#95c95f] text-xs shrink-0" title="Assistir vídeo">
+                Assistir
+              </a>
+            )}
+            <button
+              onClick={() => getGame(g.id).then(setEditing).catch((e) => setError(e instanceof Error ? e.message : 'Não foi possível abrir a partida'))}
+              className="text-[#8f9db3] hover:text-[#f1f4f8] text-xs shrink-0"
+              title="Editar"
+            >
+              Editar
+            </button>
             <button onClick={() => remove(g.id)} className="text-[#8f9db3] hover:text-red-400 text-sm" title="Apagar">🗑</button>
           </li>
         ))}
