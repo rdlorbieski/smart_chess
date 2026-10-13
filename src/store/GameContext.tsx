@@ -122,7 +122,7 @@ interface GameContextType extends GameState {
   navigateStart: () => void
   navigateEnd: () => void
   /** `focusFen`: open the game at the first main-line position matching it (e.g. from the explorer). */
-  loadPGN: (pgn: string, opts?: { focusFen?: string }) => Promise<void>
+  loadPGN: (pgn: string, opts?: { focusFen?: string }) => Promise<boolean>
   loadFEN: (fen: string) => void
   flipBoard: () => void
   setMode: (mode: AppMode) => void
@@ -499,8 +499,10 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         trainingReveal: false,
       }))
       setSelectedMoveIndex(null)
+      return true
     } catch (err) {
       console.error('PGN parse error', err)
+      return false
     }
   }, [engine, resetClock])
 

@@ -18,7 +18,7 @@ import {
  * Bulk import of PGN files (e.g. TWIC weekly issues, Lichess Elite) into a local master
  * database that the Explorer searches by position. Stored separately from your games.
  */
-function DatabaseImport() {
+function DatabaseImport({ onSaveAsGame }: { onSaveAsGame: (pgn: string) => Promise<boolean> }) {
   const [count, setCount] = useState<number | null>(null)
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null)
@@ -67,6 +67,24 @@ function DatabaseImport() {
     if (await importTexts([Promise.resolve(pgnText)])) {
       setPgnText('')
       setShowPaste(false)
+    }
+  }
+
+  const saveAsGame = async () => {
+    if (!pgnText.trim()) return
+    setBusy(true)
+    setMsg(null)
+    try {
+      if (!(await onSaveAsGame(pgnText.trim()))) {
+        setMsg({ ok: false, text: 'Não foi possível ler o PGN.' })
+        return
+      }
+      setPgnText('')
+      setShowPaste(false)
+    } catch (e) {
+      setMsg({ ok: false, text: e instanceof Error ? e.message : 'Não foi possível carregar o PGN' })
+    } finally {
+      setBusy(false)
     }
   }
 
@@ -135,6 +153,14 @@ function DatabaseImport() {
             >
               {busy ? 'Importando…' : 'Importar texto'}
             </button>
+            <button
+              type="button"
+              onClick={saveAsGame}
+              disabled={busy || !pgnText.trim()}
+              className="px-2.5 py-1 rounded text-xs border border-[#34435a] text-[#f1f4f8] hover:bg-[#2a3648] disabled:opacity-50"
+            >
+              {busy ? 'Carregando…' : 'Salvar partida'}
+            </button>
           </div>
         </div>
       )}
@@ -183,7 +209,7 @@ function Stars({ value, onChange }: { value: number; onChange?: (n: number) => v
   )
 }
 
-export function SaveGameModal({ onClose }: { onClose: () => void }) {
+export function SaveGameModal({ onClose, onSaved }: { onClose: () => void; onSaved?: () => void }) {
   const { fens, moves, currentFen, playerWhite, playerBlack, meta, setMeta, setPlayerName, getPgn, serverEngine } = useGame()
   const [event, setEvent] = useState(meta.event)
   const [site, setSite] = useState(meta.site)
@@ -213,6 +239,7 @@ export function SaveGameModal({ onClose }: { onClose: () => void }) {
       } else {
         await saveGame({ ...base, result: '*', fen: currentFen })
       }
+      onSaved?.()
       setMsg({ ok: true, text: 'Partida salva.' })
     } catch (e) {
       setMsg({ ok: false, text: e instanceof Error ? e.message : 'Não foi possível salvar' })
@@ -378,6 +405,7 @@ export function LibraryModal({ onClose }: { onClose: () => void }) {
   const [rows, setRows] = useState<SavedGameSummary[] | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [editing, setEditing] = useState<SavedGame | null>(null)
+  const [savingPastedGame, setSavingPastedGame] = useState(false)
 
   const refresh = useCallback(() => {
     listGames(q)
@@ -400,6 +428,12 @@ export function LibraryModal({ onClose }: { onClose: () => void }) {
     onClose()
   }
 
+  const savePastedGame = async (pgn: string) => {
+    const loaded = await loadPGN(pgn)
+    if (loaded) setSavingPastedGame(true)
+    return loaded
+  }
+
   const remove = async (id: number) => {
     if (!confirm('Apagar esta partida salva?')) return
     await deleteGame(id)
@@ -409,7 +443,8 @@ export function LibraryModal({ onClose }: { onClose: () => void }) {
   return (
     <Modal title="Partidas salvas" onClose={onClose}>
       {editing && <EditSavedGameModal game={editing} onClose={() => setEditing(null)} onSave={() => { setEditing(null); refresh() }} />}
-      <DatabaseImport />
+      {savingPastedGame && <SaveGameModal onClose={() => setSavingPastedGame(false)} onSaved={refresh} />}
+      <DatabaseImport onSaveAsGame={savePastedGame} />
       <input className={`${input} mb-3`} placeholder="Buscar jogadores, torneio, abertura, notas…" value={q} onChange={(e) => setQ(e.target.value)} />
       {error && <p className="text-sm text-red-400">{error}</p>}
       {rows && rows.length === 0 && <p className="text-sm text-[#8f9db3] py-4 text-center">Nenhuma partida salva ainda.</p>}
